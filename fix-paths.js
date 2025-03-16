@@ -12,8 +12,9 @@ const indexPath = path.resolve(__dirname, 'dist', 'index.html');
 // Read the file
 let html = fs.readFileSync(indexPath, 'utf8');
 
-// Replace all occurrences of /xirr-calculator/ with /
-html = html.replace(/\/xirr-calculator\//g, '/');
+// Replace all occurrences of /xirr-calculator/ with / in asset paths only
+// This regex targets only the asset paths, not other URLs like Google Analytics
+html = html.replace(/(src|href)="\/xirr-calculator\//g, '$1="/');
 
 // Write the file back
 fs.writeFileSync(indexPath, html);
