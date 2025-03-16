@@ -149,3 +149,17 @@ a:hover {
     padding: 1rem;
   }
 }
+
+/* Add responsive grid layout */
+.calculator-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .calculator-container {
+    grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr);
+  }
+}

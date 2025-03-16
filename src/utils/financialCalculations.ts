@@ -156,7 +156,8 @@ export const generateCashFlows = (plan: InvestmentPlan): { cashFlows: number[]; 
   
   const cashFlows: number[] = [];
   const dates: Date[] = [];
-  const startDate = new Date('2025-01-01'); // Set start date to January 1, 2025
+  const currentYear = new Date().getFullYear();
+  const startDate = new Date(`${currentYear}-01-01`); // Set start date to January 1 of current year
   
   // Add payments (negative cash flows)
   if (paymentFrequency === PaymentFrequency.ANNUAL) {

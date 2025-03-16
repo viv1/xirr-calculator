@@ -48,17 +48,27 @@ function App() {
 
   const scrollToXirrExplanation = () => {
     setActiveTab('info');
-    
-    // Use setTimeout to ensure the tab change has completed
-    setTimeout(() => {
-      const xirrExplanation = document.getElementById('xirr-explanation');
-      if (xirrExplanation) {
-        xirrExplanation.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }
-    }, 100);
+    // Scroll to top after tab change
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  const scrollToGuaranteedPlans = () => {
+    setActiveTab('plans');
+    // Scroll to top after tab change
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  const scrollToResults = () => {
+    const resultsElement = document.getElementById('results-section');
+    if (resultsElement) {
+      resultsElement.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const handleFormChange = (plan: InvestmentPlan) => {
@@ -72,6 +82,7 @@ function App() {
     setCurrentPlan(plan);
     calculateReturns(plan);
     setHasChanges(false);
+    scrollToResults(); // Scroll to results after calculation
   };
 
   const handleReset = () => {
@@ -114,29 +125,51 @@ function App() {
           >
             What is XIRR? Why is it the most accurate measure of investment returns? →
           </a>
+          <br />
+          <a 
+            href="#" 
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToGuaranteedPlans();
+            }}
+            style={{ 
+              color: colors.primary.dark,
+              textDecoration: 'underline',
+              fontWeight: 500,
+              fontSize: '0.95rem',
+              display: 'inline-block',
+              margin: '0.5rem 0'
+            }}
+          >
+            Learn about Guaranteed Income Plans and their actual returns →
+          </a>
         </motion.div>
       </motion.div>
 
-      <Tabs>
+      <Tabs className="tabs-container">
         <TabButton 
+          className={`tab-button ${activeTab === 'calculator' ? 'active' : ''}`}
           isActive={activeTab === 'calculator'} 
           onClick={() => handleTabChange('calculator')}
         >
           Calculator
         </TabButton>
         <TabButton 
+          className={`tab-button ${activeTab === 'info' ? 'active' : ''}`}
           isActive={activeTab === 'info'} 
           onClick={() => handleTabChange('info')}
         >
           Understanding Returns
         </TabButton>
         <TabButton 
+          className={`tab-button ${activeTab === 'tax' ? 'active' : ''}`}
           isActive={activeTab === 'tax'} 
           onClick={() => handleTabChange('tax')}
         >
           Tax Implications
         </TabButton>
         <TabButton 
+          className={`tab-button ${activeTab === 'plans' ? 'active' : ''}`}
           isActive={activeTab === 'plans'} 
           onClick={() => handleTabChange('plans')}
         >
@@ -146,13 +179,8 @@ function App() {
 
       {activeTab === 'calculator' && (
         <>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr)', 
-            gap: '2rem',
-            alignItems: 'start'
-          }}>
-            <div>
+          <div className="calculator-container">
+            <div className="form-section">
               <InvestmentForm 
                 onCalculate={handleCalculate} 
                 onReset={handleReset}
@@ -160,6 +188,7 @@ function App() {
                 onTabChange={handleTabChange}
                 onFormChange={handleFormChange}
                 currentPlan={currentPlan}
+                scrollToResults={scrollToResults}
               />
               
               {error && (
@@ -182,12 +211,11 @@ function App() {
             </div>
             
             <motion.div
+              className="policy-summary"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
               style={{
-                position: 'sticky',
-                top: '2rem',
                 backgroundColor: colors.neutral.white,
                 borderRadius: '16px',
                 padding: '1.5rem',
@@ -325,9 +353,9 @@ function App() {
                       (() => {
                         const firstReturn = result.cashflows.filter(cf => cf.amount > 0)[0];
                         return firstReturn && firstReturn.date ? 
-                          (new Date(firstReturn.date).getFullYear() - 2025 + 1) : 13;
+                          (new Date(firstReturn.date).getFullYear() - new Date().getFullYear() + 1) : currentPlan.returnStartYear;
                       })() : 
-                      13)) : 
+                      currentPlan.returnStartYear)) : 
                     currentPlan.returnStartYear}th Year You Get
                 </div>
                 
@@ -385,10 +413,10 @@ function App() {
                       (() => {
                         const firstReturn = result.cashflows.filter(cf => cf.amount > 0)[0];
                         return firstReturn && firstReturn.date ? 
-                          (new Date(firstReturn.date).getFullYear() - 2025 + 1) : 13;
+                          (new Date(firstReturn.date).getFullYear() - new Date().getFullYear() + 1) : currentPlan.returnStartYear;
                       })() : 
-                      13)) : 
-                    13} Year</span>
+                      currentPlan.returnStartYear)) : 
+                    currentPlan.returnStartYear} Year</span>
                   <span>...</span>
                   <span>{result && result.cashflows ? 
                     Math.max(1, Math.min(100, result.cashflows.filter(cf => cf.amount > 0 && cf.amount < 100000).length > 0 ? 
@@ -396,10 +424,10 @@ function App() {
                         const lastReturns = result.cashflows.filter(cf => cf.amount > 0 && cf.amount < 100000);
                         const lastReturn = lastReturns.length > 0 ? lastReturns[lastReturns.length - 1] : null;
                         return lastReturn && lastReturn.date ? 
-                          (new Date(lastReturn.date).getFullYear() - 2025 + 1) : 42;
+                          (new Date(lastReturn.date).getFullYear() - new Date().getFullYear() + currentPlan.returnStartYear) : (currentPlan.returnStartYear + currentPlan.returnYears - 1);
                       })() : 
-                      42)) : 
-                    42} Years</span>
+                      (currentPlan.returnStartYear + currentPlan.returnYears - 1))) : 
+                    (currentPlan.returnStartYear + currentPlan.returnYears - 1)} Years</span>
                 </div>
               </div>
               
@@ -446,9 +474,9 @@ function App() {
                       (() => {
                         const lumpsum = result.cashflows.filter(cf => cf.amount > 100000)[0];
                         return lumpsum && lumpsum.date ? 
-                          (new Date(lumpsum.date).getFullYear() - 2025 + 1) : 42;
+                          (new Date(lumpsum.date).getFullYear() - new Date().getFullYear() + 1) : currentPlan.finalReturnYear;
                       })() : 
-                      42}th Year
+                      currentPlan.finalReturnYear} Year
                   </div>
                 </div>
               )}
@@ -516,11 +544,19 @@ function App() {
           </div>
           
           {result && (
-            <ResultsDisplay 
-              result={result} 
-              onTabChange={handleTabChange}
-              hasChanges={hasChanges}
-            />
+            <div 
+              id="results-section"
+              style={{ 
+                marginTop: '2rem', 
+                width: '100%' 
+              }}
+            >
+              <ResultsDisplay 
+                result={result} 
+                onTabChange={handleTabChange}
+                hasChanges={hasChanges}
+              />
+            </div>
           )}
         </>
       )}

@@ -28,6 +28,7 @@ interface InvestmentFormProps {
   onTabChange?: (tab: string) => void;
   onFormChange?: (plan: InvestmentPlan) => void;
   currentPlan?: InvestmentPlan;
+  scrollToResults?: () => void;
 }
 
 // Default investment plan values
@@ -96,13 +97,13 @@ const getTaxBracketLabel = (taxBracket: TaxBracket): string => {
     case TaxBracket.THIRTY:
       return '30% Tax Bracket';
     case TaxBracket.SURCHARGE_FIFTY_LAKHS:
-      return '30% + 10% Surcharge (Income > ₹50L)';
+      return '30% + 10% Surcharge (Income above ₹50L)';
     case TaxBracket.SURCHARGE_ONE_CRORE:
-      return '30% + 15% Surcharge (Income > ₹1Cr)';
+      return '30% + 15% Surcharge (Income above ₹1Cr)';
     case TaxBracket.SURCHARGE_TWO_CRORE:
-      return '30% + 25% Surcharge (Income > ₹2Cr)';
+      return '30% + 25% Surcharge (Income above ₹2Cr)';
     case TaxBracket.SURCHARGE_FIVE_CRORE:
-      return '30% + 37% Surcharge (Income > ₹5Cr)';
+      return '30% + 37% Surcharge (Income above ₹5Cr)';
     default:
       return 'No Tax (0%)';
   }
@@ -114,7 +115,8 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
   loading,
   onTabChange,
   onFormChange,
-  currentPlan
+  currentPlan,
+  scrollToResults
 }) => {
   const [formData, setFormData] = useState<InvestmentPlan>(currentPlan || defaultPlanValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -196,7 +198,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
       const lastRegularReturnYear = formData.returnStartYear + formData.returnYears - 1;
       
       if (formData.finalReturnYear > 0 && formData.finalReturnYear < lastRegularReturnYear) {
-        newErrors.finalReturnYear = 'Final return year must be after or equal to the last regular return year';
+        newErrors.finalReturnYear = `Final return year must be after or equal to the last regular return year (Year ${lastRegularReturnYear})`;
       }
     }
     
@@ -210,16 +212,12 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
     if (validateForm()) {
       onCalculate(formData);
       
-      // Improved scroll to results section with a slight delay to ensure rendering is complete
-      setTimeout(() => {
-        const resultsSection = document.getElementById('results-section');
-        if (resultsSection) {
-          resultsSection.scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'start'
-          });
-        }
-      }, 100);
+      // Use the scrollToResults function if provided
+      if (scrollToResults) {
+        setTimeout(() => {
+          scrollToResults();
+        }, 100);
+      }
     }
   };
 
@@ -244,9 +242,10 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
       
       <FormContainer as="form" onSubmit={handleSubmit}>
         <motion.div variants={slideUp}>
-          <FormGroup>
-            <Label htmlFor="paymentFrequency">Payment Frequency</Label>
+          <FormGroup className="form-group">
+            <Label className="form-label" htmlFor="paymentFrequency">Payment Frequency</Label>
             <Select
+              className="form-select"
               id="paymentFrequency"
               name="paymentFrequency"
               value={formData.paymentFrequency}
@@ -260,10 +259,11 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
             </Select>
           </FormGroup>
           
-          <FormGroup>
-            <Label htmlFor="annualPayment">{paymentDisplay.label}</Label>
+          <FormGroup className="form-group">
+            <Label className="form-label" htmlFor="annualPayment">{paymentDisplay.label}</Label>
             <Flex>
               <Input
+                className="form-input"
                 type="number"
                 id="annualPayment"
                 name="annualPayment"
@@ -293,6 +293,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
               />
             </Flex>
             <Slider
+              className="form-slider"
               id="annualPayment-slider"
               min="0"
               max="1000000"
@@ -324,8 +325,8 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
             {errors.annualPayment && <ErrorText>{errors.annualPayment}</ErrorText>}
           </FormGroup>
           
-          <FormGroup>
-            <Label htmlFor="paymentYears">Payment Duration (Years)</Label>
+          <FormGroup className="form-group">
+            <Label className="form-label" htmlFor="paymentYears">Payment Duration (Years)</Label>
             <Flex>
               <Input
                 type="number"
@@ -340,6 +341,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
               />
             </Flex>
             <Slider
+              className="form-slider"
               id="paymentYears-slider"
               min="1"
               max="30"
@@ -357,9 +359,10 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
           
           <Divider style={{ margin: '1.5rem 0' }} />
           
-          <FormGroup>
-            <Label htmlFor="returnFrequency">Return Frequency</Label>
+          <FormGroup className="form-group">
+            <Label className="form-label" htmlFor="returnFrequency">Return Frequency</Label>
             <Select
+              className="form-select"
               id="returnFrequency"
               name="returnFrequency"
               value={formData.returnFrequency}
@@ -437,7 +440,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
           </FormGroup>
           
           <FormGroup>
-            <Label htmlFor="returnStartYear">Return Start Year</Label>
+            <Label className="form-label" htmlFor="returnStartYear">Return Start Year</Label>
             <Flex>
               <Input
                 type="number"
@@ -452,6 +455,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
               />
             </Flex>
             <Slider
+              className="form-slider"
               id="returnStartYear-slider"
               min="1"
               max="50"
@@ -501,7 +505,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
           <Divider style={{ margin: '1.5rem 0' }} />
           
           <FormGroup>
-            <Label htmlFor="finalReturnYear">Final Return Year (Maturity/Lumpsum)</Label>
+            <Label className="form-label" htmlFor="finalReturnYear">Final Return Year (Maturity/Lumpsum)</Label>
             <Flex>
               <Input
                 type="number"
@@ -535,7 +539,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
           </FormGroup>
           
           <FormGroup>
-            <Label htmlFor="finalReturnAmount">Final Return Amount (Maturity/Lumpsum)</Label>
+            <Label className="form-label" htmlFor="finalReturnAmount">Final Return Amount (Maturity/Lumpsum)</Label>
             <Flex>
               <Input
                 type="number"
@@ -564,8 +568,8 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
           
           <Divider style={{ margin: '1.5rem 0' }} />
           
-          <FormGroup>
-            <Label htmlFor="taxBracket">Your Tax Bracket</Label>
+          <FormGroup className="form-group">
+            <Label className="form-label" htmlFor="taxBracket">Your Tax Bracket</Label>
             <Select
               id="taxBracket"
               name="taxBracket"
@@ -580,10 +584,10 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
               <option value={TaxBracket.TWENTY.toString()}>20% Tax Bracket</option>
               <option value={TaxBracket.TWENTY_FIVE.toString()}>25% Tax Bracket</option>
               <option value={TaxBracket.THIRTY.toString()}>30% Tax Bracket</option>
-              <option value={TaxBracket.SURCHARGE_FIFTY_LAKHS.toString()}>30% + 10% Surcharge (Income &gt; ₹50L)</option>
-              <option value={TaxBracket.SURCHARGE_ONE_CRORE.toString()}>30% + 15% Surcharge (Income &gt; ₹1Cr)</option>
-              <option value={TaxBracket.SURCHARGE_TWO_CRORE.toString()}>30% + 25% Surcharge (Income &gt; ₹2Cr)</option>
-              <option value={TaxBracket.SURCHARGE_FIVE_CRORE.toString()}>30% + 37% Surcharge (Income &gt; ₹5Cr)</option>
+              <option value={TaxBracket.SURCHARGE_FIFTY_LAKHS.toString()}>30% + 10% Surcharge (Income above ₹50L)</option>
+              <option value={TaxBracket.SURCHARGE_ONE_CRORE.toString()}>30% + 15% Surcharge (Income above ₹1Cr)</option>
+              <option value={TaxBracket.SURCHARGE_TWO_CRORE.toString()}>30% + 25% Surcharge (Income above ₹2Cr)</option>
+              <option value={TaxBracket.SURCHARGE_FIVE_CRORE.toString()}>30% + 37% Surcharge (Income above ₹5Cr)</option>
             </Select>
             <InfoText>
               This helps calculate tax-adjusted returns. For tax-free investments like PPF, select "No Tax".

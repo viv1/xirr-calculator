@@ -55,6 +55,10 @@ export const Container = styled.div`
   font-family: 'Poppins', sans-serif;
   background-color: ${colors.neutral.lightest};
   min-height: 100vh;
+  
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
 export const Card = styled(motion.div)`
@@ -70,6 +74,14 @@ export const Card = styled(motion.div)`
   &:hover {
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
     transform: translateY(-2px);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 1rem;
   }
 `;
 
@@ -94,24 +106,28 @@ export const Title = styled.h1`
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.75rem;
+  }
 `;
 
 export const Subtitle = styled.h2`
   font-size: 1.5rem;
   font-weight: 600;
-  color: ${colors.neutral.darkest};
+  color: ${colors.neutral.darker};
   margin-bottom: 1rem;
-  position: relative;
   
-  &:after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 0;
-    width: 40px;
-    height: 3px;
-    background: ${colors.gradient.blue};
-    border-radius: 3px;
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.2rem;
   }
 `;
 
@@ -140,6 +156,10 @@ export const FormGroup = styled.div`
   flex-direction: column;
   margin-bottom: 1.5rem;
   position: relative;
+  
+  @media (max-width: 480px) {
+    margin-bottom: 1.25rem;
+  }
 `;
 
 export const Label = styled.label`
@@ -153,6 +173,10 @@ export const Label = styled.label`
   svg {
     margin-left: 0.5rem;
     color: ${colors.neutral.dark};
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.8rem;
   }
 `;
 
@@ -173,6 +197,11 @@ export const Input = styled.input`
   &:disabled {
     background-color: ${colors.neutral.lighter};
     cursor: not-allowed;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
   }
 `;
 
@@ -198,6 +227,13 @@ export const Select = styled.select`
   &:disabled {
     background-color: ${colors.neutral.lighter};
     cursor: not-allowed;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+    padding-right: 2.2rem;
+    background-position: right 0.8rem center;
   }
 `;
 
@@ -262,32 +298,37 @@ export const Button = styled(motion.button)`
   border: none;
   border-radius: 8px;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  
+  svg {
+    margin-right: 0.5rem;
+  }
   
   &:hover {
-    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
   }
   
   &:disabled {
-    background: ${colors.neutral.medium};
+    opacity: 0.7;
     cursor: not-allowed;
+    transform: none;
     box-shadow: none;
   }
   
-  svg {
-    width: 18px;
-    height: 18px;
+  @media (max-width: 480px) {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
   }
 `;
 
 export const SecondaryButton = styled(Button)`
-  background: ${colors.neutral.white};
+  background: white;
   color: ${colors.primary.main};
   border: 1px solid ${colors.primary.main};
   
@@ -296,10 +337,9 @@ export const SecondaryButton = styled(Button)`
     box-shadow: 0 4px 12px rgba(66, 153, 225, 0.1);
   }
   
-  &:disabled {
-    background: ${colors.neutral.white};
-    border-color: ${colors.neutral.medium};
-    color: ${colors.neutral.medium};
+  @media (max-width: 480px) {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
   }
 `;
 
@@ -427,6 +467,10 @@ export const Tabs = styled.div`
   &::-webkit-scrollbar {
     display: none;
   }
+  
+  @media (max-width: 768px) {
+    padding-bottom: 0.5rem;
+  }
 `;
 
 export const TabButton = styled.button<{ isActive?: boolean }>`
@@ -446,8 +490,9 @@ export const TabButton = styled.button<{ isActive?: boolean }>`
     background-color: ${colors.neutral.lightest};
   }
   
-  &:focus {
-    outline: none;
+  @media (max-width: 768px) {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
   }
 `;
 
