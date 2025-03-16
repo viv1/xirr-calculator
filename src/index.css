@@ -1,13 +1,151 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-light: #63B3ED;
+  --primary-main: #4299E1;
+  --primary-dark: #3182CE;
+  --secondary-light: #B794F4;
+  --secondary-main: #805AD5;
+  --secondary-dark: #6B46C1;
+  --success-light: #68D391;
+  --success-main: #48BB78;
+  --success-dark: #38A169;
+  --warning-light: #F6AD55;
+  --warning-main: #ED8936;
+  --warning-dark: #DD6B20;
+  --error-light: #FC8181;
+  --error-main: #E53E3E;
+  --error-dark: #C53030;
+  --neutral-white: #FFFFFF;
+  --neutral-lightest: #F7FAFC;
+  --neutral-lighter: #EDF2F7;
+  --neutral-light: #E2E8F0;
+  --neutral-medium: #CBD5E0;
+  --neutral-dark: #718096;
+  --neutral-darker: #4A5568;
+  --neutral-darkest: #2D3748;
+  --neutral-black: #1A202C;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--neutral-lightest);
+  color: var(--neutral-darker);
+  line-height: 1.6;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+  background-color: var(--neutral-lighter);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+ul {
+  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+  color: var(--neutral-darker);
+}
+
+a {
+  color: var(--primary-main);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--neutral-lighter);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--neutral-medium);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neutral-dark);
+}
+
+/* Animation styles */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease-in-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+  
+  .App {
+    padding: 1rem;
+  }
 }
