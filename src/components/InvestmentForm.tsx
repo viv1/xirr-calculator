@@ -153,7 +153,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
     
     setFormData(updatedFormData);
     
-    // Update payment display if payment frequency changes
+    // Update payment display if investment frequency changes
     if (name === 'paymentFrequency') {
       setPaymentDisplay(getDisplayAmount(updatedFormData.annualPayment, updatedFormData.paymentFrequency as PaymentFrequency));
     }
@@ -183,11 +183,11 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
     const newErrors: Record<string, string> = {};
     
     if (formData.annualPayment <= 0) {
-      newErrors.annualPayment = 'Annual payment must be greater than 0';
+      newErrors.annualPayment = 'Annual investment must be greater than 0';
     }
     
     if (formData.paymentYears <= 0) {
-      newErrors.paymentYears = 'Payment years must be greater than 0';
+      newErrors.paymentYears = 'Investment years must be greater than 0';
     }
     
     if (formData.returnYears < 0) {
@@ -243,7 +243,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
       <FormContainer as="form" onSubmit={handleSubmit}>
         <motion.div variants={slideUp}>
           <FormGroup className="form-group">
-            <Label className="form-label" htmlFor="paymentFrequency">Payment Frequency</Label>
+            <Label className="form-label" htmlFor="paymentFrequency">Investment Frequency</Label>
             <Select
               className="form-select"
               id="paymentFrequency"
@@ -326,7 +326,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
           </FormGroup>
           
           <FormGroup className="form-group">
-            <Label className="form-label" htmlFor="paymentYears">Payment Duration (Years)</Label>
+            <Label className="form-label" htmlFor="paymentYears">Investment Duration (Years)</Label>
             <Flex>
               <Input
                 type="number"
@@ -336,7 +336,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
                 onChange={handleChange}
                 disabled={loading}
                 min="1"
-                max="30"
+                max="50"
                 step="1"
               />
             </Flex>
@@ -344,7 +344,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
               className="form-slider"
               id="paymentYears-slider"
               min="1"
-              max="30"
+              max="50"
               step="1"
               value={formData.paymentYears}
               onChange={(e) => handleSliderChange('paymentYears', parseInt(e.target.value))}
@@ -352,7 +352,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
             />
             <SliderValue>
               <span>1 year</span>
-              <span>30 years</span>
+              <span>50 years</span>
             </SliderValue>
             {errors.paymentYears && <ErrorText>{errors.paymentYears}</ErrorText>}
           </FormGroup>
@@ -450,7 +450,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
                 onChange={handleChange}
                 disabled={loading || formData.returnAmount === 0}
                 min="1"
-                max="50"
+                max="80"
                 step="1"
               />
             </Flex>
@@ -458,7 +458,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
               className="form-slider"
               id="returnStartYear-slider"
               min="1"
-              max="50"
+              max="80"
               step="1"
               value={formData.returnStartYear}
               onChange={(e) => handleSliderChange('returnStartYear', parseInt(e.target.value))}
@@ -466,7 +466,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
             />
             <SliderValue>
               <span>1 year</span>
-              <span>50 years</span>
+              <span>80 years</span>
             </SliderValue>
             {errors.returnStartYear && <ErrorText>{errors.returnStartYear}</ErrorText>}
           </FormGroup>
@@ -482,14 +482,14 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
                 onChange={handleChange}
                 disabled={loading || formData.returnAmount === 0}
                 min="0"
-                max="50"
+                max="80"
                 step="1"
               />
             </Flex>
             <Slider
               id="returnYears-slider"
               min="0"
-              max="50"
+              max="80"
               step="1"
               value={formData.returnYears}
               onChange={(e) => handleSliderChange('returnYears', parseInt(e.target.value))}
@@ -497,7 +497,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
             />
             <SliderValue>
               <span>0 years</span>
-              <span>50 years</span>
+              <span>80 years</span>
             </SliderValue>
             {errors.returnYears && <ErrorText>{errors.returnYears}</ErrorText>}
           </FormGroup>
@@ -534,6 +534,12 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
             </SliderValue>
             <InfoText>
               Set to 0 if there is no lumpsum payment at the end
+              {formData.returnAmount > 0 && formData.returnYears > 0 && (
+                <>
+                  <br />
+                  Minimum valid input: {formData.returnStartYear + formData.returnYears - 1} (last regular return year)
+                </>
+              )}
             </InfoText>
             {errors.finalReturnYear && <ErrorText>{errors.finalReturnYear}</ErrorText>}
           </FormGroup>
@@ -554,7 +560,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
             <Slider
               id="finalReturnAmount-slider"
               min="0"
-              max="10000000"
+              max="20000000"
               step="100000"
               value={formData.finalReturnAmount}
               onChange={(e) => handleSliderChange('finalReturnAmount', parseInt(e.target.value))}
@@ -562,7 +568,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
             />
             <SliderValue>
               <span>₹0</span>
-              <span>₹1Cr</span>
+              <span>₹2Cr</span>
             </SliderValue>
           </FormGroup>
           

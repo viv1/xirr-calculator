@@ -282,22 +282,18 @@ function App() {
                     currency: 'INR',
                     maximumFractionDigits: 0,
                     minimumFractionDigits: 0
-                  }).format(result ? (result.cashflows && result.cashflows.length > 0 ? 
-                    result.totalInvested / (result.cashflows.filter(cf => cf.amount < 0).length || 1) : 
+                  }).format(
                     currentPlan.paymentFrequency === PaymentFrequency.MONTHLY ? currentPlan.annualPayment / 12 :
                     currentPlan.paymentFrequency === PaymentFrequency.QUARTERLY ? currentPlan.annualPayment / 4 :
                     currentPlan.paymentFrequency === PaymentFrequency.HALF_YEARLY ? currentPlan.annualPayment / 2 :
-                    currentPlan.annualPayment) : 
-                    currentPlan.paymentFrequency === PaymentFrequency.MONTHLY ? currentPlan.annualPayment / 12 :
-                    currentPlan.paymentFrequency === PaymentFrequency.QUARTERLY ? currentPlan.annualPayment / 4 :
-                    currentPlan.paymentFrequency === PaymentFrequency.HALF_YEARLY ? currentPlan.annualPayment / 2 :
-                    currentPlan.annualPayment)} / month
+                    currentPlan.annualPayment)} / {currentPlan.paymentFrequency === PaymentFrequency.MONTHLY ? "month" :
+                    currentPlan.paymentFrequency === PaymentFrequency.QUARTERLY ? "quarter" :
+                    currentPlan.paymentFrequency === PaymentFrequency.HALF_YEARLY ? "half-year" :
+                    "year"}
                 </div>
                 
                 <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-                  for {result && result.cashflows ? 
-                    Math.max(1, Math.min(30, (result.cashflows.filter(cf => cf.amount < 0).length / 12) || 10)) : 
-                    currentPlan.paymentYears} Years
+                  for {currentPlan.paymentYears} Years
                 </div>
                 
                 <div style={{ 
@@ -312,7 +308,7 @@ function App() {
                     style: 'currency',
                     currency: 'INR',
                     maximumFractionDigits: 0
-                  }).format(result ? result.totalInvested : currentPlan.annualPayment * currentPlan.paymentYears)}
+                  }).format(currentPlan.annualPayment * currentPlan.paymentYears)}
                 </div>
                 
                 <div style={{ 
@@ -324,7 +320,7 @@ function App() {
                 }}>
                   <span>1 Year</span>
                   <span>...</span>
-                  <span>{result ? Math.max(1, Math.min(30, (result.cashflows ? result.cashflows.filter(cf => cf.amount < 0).length / 12 : 10) || 10)) : 10} Years</span>
+                  <span>{currentPlan.paymentYears} Years</span>
                 </div>
               </div>
               
@@ -348,15 +344,7 @@ function App() {
                   fontSize: '0.8rem',
                   fontWeight: 'bold'
                 }}>
-                  From {result && result.cashflows ? 
-                    Math.max(1, Math.min(50, result.cashflows.filter(cf => cf.amount > 0 && cf.amount < 100000).length > 0 ? 
-                      (() => {
-                        const firstReturn = result.cashflows.filter(cf => cf.amount > 0)[0];
-                        return firstReturn && firstReturn.date ? 
-                          (new Date(firstReturn.date).getFullYear() - new Date().getFullYear() + 1) : currentPlan.returnStartYear;
-                      })() : 
-                      currentPlan.returnStartYear)) : 
-                    currentPlan.returnStartYear}th Year You Get
+                  From {currentPlan.returnStartYear}th Year You Get
                 </div>
                 
                 <div style={{ 
@@ -371,19 +359,18 @@ function App() {
                     currency: 'INR',
                     maximumFractionDigits: 0,
                     minimumFractionDigits: 0
-                  }).format(result && result.cashflows ? 
-                    (result.totalReturns - (result.cashflows.filter(cf => cf.amount > 100000).reduce((sum, cf) => sum + cf.amount, 0) || 0)) / 
-                    (result.cashflows.filter(cf => cf.amount > 0 && cf.amount < 100000).length || 1) : 
-                    currentPlan.paymentFrequency === PaymentFrequency.MONTHLY ? currentPlan.returnAmount / 12 :
-                    currentPlan.paymentFrequency === PaymentFrequency.QUARTERLY ? currentPlan.returnAmount / 4 :
-                    currentPlan.paymentFrequency === PaymentFrequency.HALF_YEARLY ? currentPlan.returnAmount / 2 :
-                    currentPlan.returnAmount)} / month
+                  }).format(
+                    currentPlan.returnFrequency === PaymentFrequency.MONTHLY ? currentPlan.returnAmount / 12 :
+                    currentPlan.returnFrequency === PaymentFrequency.QUARTERLY ? currentPlan.returnAmount / 4 :
+                    currentPlan.returnFrequency === PaymentFrequency.HALF_YEARLY ? currentPlan.returnAmount / 2 :
+                    currentPlan.returnAmount)} / {currentPlan.returnFrequency === PaymentFrequency.MONTHLY ? "month" :
+                    currentPlan.returnFrequency === PaymentFrequency.QUARTERLY ? "quarter" :
+                    currentPlan.returnFrequency === PaymentFrequency.HALF_YEARLY ? "half-year" :
+                    "year"}
                 </div>
                 
                 <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-                  for {result && result.cashflows ? 
-                    Math.max(1, Math.min(50, (result.cashflows.filter(cf => cf.amount > 0 && cf.amount < 100000).length / 12) || 30)) : 
-                    currentPlan.returnYears} Years
+                  for {currentPlan.returnYears} Years
                 </div>
                 
                 <div style={{ 
@@ -398,7 +385,7 @@ function App() {
                     style: 'currency',
                     currency: 'INR',
                     maximumFractionDigits: 0
-                  }).format(result ? result.totalReturns - (result.cashflows?.filter(cf => cf.amount > 100000).reduce((sum, cf) => sum + cf.amount, 0) || 0) : currentPlan.returnAmount * currentPlan.returnYears)}
+                  }).format(currentPlan.returnAmount * currentPlan.returnYears)}
                 </div>
                 
                 <div style={{ 
@@ -408,80 +395,14 @@ function App() {
                   color: colors.neutral.dark,
                   fontSize: '0.8rem'
                 }}>
-                  <span>{result && result.cashflows ? 
-                    Math.max(1, Math.min(50, result.cashflows.filter(cf => cf.amount > 0 && cf.amount < 100000).length > 0 ? 
-                      (() => {
-                        const firstReturn = result.cashflows.filter(cf => cf.amount > 0)[0];
-                        return firstReturn && firstReturn.date ? 
-                          (new Date(firstReturn.date).getFullYear() - new Date().getFullYear() + 1) : currentPlan.returnStartYear;
-                      })() : 
-                      currentPlan.returnStartYear)) : 
-                    currentPlan.returnStartYear} Year</span>
+                  <span>{currentPlan.returnStartYear} Year</span>
                   <span>...</span>
-                  <span>{result && result.cashflows ? 
-                    Math.max(1, Math.min(100, result.cashflows.filter(cf => cf.amount > 0 && cf.amount < 100000).length > 0 ? 
-                      (() => {
-                        const lastReturns = result.cashflows.filter(cf => cf.amount > 0 && cf.amount < 100000);
-                        const lastReturn = lastReturns.length > 0 ? lastReturns[lastReturns.length - 1] : null;
-                        return lastReturn && lastReturn.date ? 
-                          (new Date(lastReturn.date).getFullYear() - new Date().getFullYear() + currentPlan.returnStartYear) : (currentPlan.returnStartYear + currentPlan.returnYears - 1);
-                      })() : 
-                      (currentPlan.returnStartYear + currentPlan.returnYears - 1))) : 
-                    (currentPlan.returnStartYear + currentPlan.returnYears - 1)} Years</span>
+                  <span>{currentPlan.returnStartYear + currentPlan.returnYears - 1} Years</span>
                 </div>
               </div>
               
               {/* Lumpsum Section */}
-              {result && result.cashflows && result.cashflows.filter(cf => cf.amount > 100000).length > 0 && (
-                <div style={{
-                  width: '100%',
-                  padding: '1.5rem',
-                  backgroundColor: colors.neutral.lightest,
-                  borderRadius: '8px',
-                  border: `1px solid ${colors.neutral.light}`,
-                  position: 'relative'
-                }}>
-                  <div style={{ 
-                    position: 'absolute', 
-                    top: '-12px', 
-                    left: '20px', 
-                    backgroundColor: colors.secondary.main,
-                    color: 'white',
-                    padding: '2px 10px',
-                    borderRadius: '4px',
-                    fontSize: '0.8rem',
-                    fontWeight: 'bold'
-                  }}>
-                    Additional Lumpsum Amount
-                  </div>
-                  
-                  <div style={{ 
-                    fontSize: '1.5rem', 
-                    fontWeight: 'bold', 
-                    color: colors.secondary.dark,
-                    textAlign: 'center',
-                    marginBottom: '0.5rem'
-                  }}>
-                    {new Intl.NumberFormat('en-IN', {
-                      style: 'currency',
-                      currency: 'INR',
-                      maximumFractionDigits: 0
-                    }).format(result.cashflows.filter(cf => cf.amount > 100000).reduce((sum, cf) => sum + cf.amount, 0) || currentPlan.finalReturnAmount)}
-                  </div>
-                  
-                  <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-                    On {result.cashflows.filter(cf => cf.amount > 100000).length > 0 ? 
-                      (() => {
-                        const lumpsum = result.cashflows.filter(cf => cf.amount > 100000)[0];
-                        return lumpsum && lumpsum.date ? 
-                          (new Date(lumpsum.date).getFullYear() - new Date().getFullYear() + 1) : currentPlan.finalReturnYear;
-                      })() : 
-                      currentPlan.finalReturnYear} Year
-                  </div>
-                </div>
-              )}
-              
-              {!result && (
+              {currentPlan.finalReturnYear > 0 && (
                 <div style={{
                   width: '100%',
                   padding: '1.5rem',
