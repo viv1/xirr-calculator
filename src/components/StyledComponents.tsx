@@ -520,6 +520,27 @@ export const Table = styled.table`
   border-collapse: collapse;
   margin: 1.5rem 0;
   font-size: 0.9rem;
+  table-layout: fixed;
+  
+  @media (max-width: 768px) {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    table-layout: auto;
+  }
+  
+  @media (max-width: 480px) {
+    display: block;
+    white-space: normal;
+    
+    thead {
+      display: none;
+    }
+    
+    tbody {
+      display: block;
+    }
+  }
 `;
 
 export const TableHeader = styled.th`
@@ -539,6 +560,23 @@ export const TableRow = styled.tr`
   &:hover {
     background-color: ${colors.primary.light}10;
   }
+  
+  @media (max-width: 480px) {
+    display: block;
+    margin-bottom: 1.5rem;
+    border: 1px solid ${colors.neutral.light};
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    background-color: white;
+    
+    &:nth-child(even) {
+      background-color: white;
+    }
+    
+    &:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
 `;
 
 export const TableCell = styled.td`
@@ -546,6 +584,40 @@ export const TableCell = styled.td`
   border-bottom: 1px solid ${colors.neutral.light};
   color: ${colors.neutral.darker};
   vertical-align: top;
+  word-wrap: break-word;
+  white-space: normal;
+  
+  @media (max-width: 768px) {
+    white-space: normal;
+  }
+  
+  @media (max-width: 480px) {
+    display: block;
+    padding: 0.75rem 1rem;
+    text-align: right;
+    border-bottom: 1px solid ${colors.neutral.lighter};
+    position: relative;
+    white-space: normal;
+    
+    &:before {
+      content: attr(data-label);
+      float: left;
+      font-weight: 600;
+      color: ${colors.neutral.darkest};
+    }
+    
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 1rem;
+    }
+    
+    &:first-child {
+      padding-top: 1rem;
+      font-weight: 600;
+      background-color: ${colors.neutral.lightest};
+      border-radius: 8px 8px 0 0;
+    }
+  }
 `;
 
 // Animation variants

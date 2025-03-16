@@ -216,51 +216,99 @@ const TaxImplications: React.FC = () => {
           Below is a comparison of various investment options, their typical returns, and tax treatment.
         </Paragraph>
         
-        <Table>
-          <thead>
-            <tr>
-              <TableHeader>Investment Type</TableHeader>
-              <TableHeader>Typical Returns</TableHeader>
-              <TableHeader>Tax Implications</TableHeader>
-              <TableHeader>Tax Efficiency</TableHeader>
-            </tr>
-          </thead>
-          <tbody>
-            {investmentOptions.map((option, index) => (
-              <TableRow key={index}>
-                <TableCell><strong>{option.name}</strong></TableCell>
-                <TableCell>{option.typicalReturns}</TableCell>
-                <TableCell>
-                  <div style={{ marginBottom: '8px' }}>
-                    {option.taxTags.map((tag, tagIndex) => (
-                      <Tooltip key={tagIndex} text={tag.tooltip}>
-                        <span style={{
-                          display: 'inline-block',
-                          padding: '2px 8px',
-                          borderRadius: '12px',
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                          backgroundColor: `${tag.color}20`,
-                          color: tag.color,
-                          marginRight: '4px',
-                          marginBottom: '4px'
-                        }}>
-                          {tag.name}
-                        </span>
-                      </Tooltip>
-                    ))}
-                  </div>
-                  {option.taxImplications}
-                </TableCell>
-                <TableCell>
-                  <Badge style={{ backgroundColor: `${getBadgeColor(option.taxEfficiency)}20`, color: getBadgeColor(option.taxEfficiency) }}>
-                    {option.taxEfficiency}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </tbody>
-        </Table>
+        <div style={{ position: 'relative' }}>
+          <div 
+            className="mobile-scroll-hint"
+            style={{ 
+              padding: '0.5rem', 
+              backgroundColor: `${colors.warning.light}20`, 
+              borderRadius: '4px', 
+              marginBottom: '1rem',
+              fontSize: '0.8rem',
+              color: colors.warning.dark,
+              textAlign: 'center',
+              display: 'none'
+            }}
+          >
+            <span style={{ fontWeight: 600 }}>Tip:</span> On smaller screens, scroll horizontally to see all data or view in card format on mobile.
+          </div>
+          
+          <style>
+            {`
+              @media (max-width: 768px) {
+                .mobile-scroll-hint {
+                  display: block !important;
+                }
+              }
+              
+              @media (max-width: 480px) {
+                .tax-implications-table td {
+                  white-space: normal !important;
+                  word-wrap: break-word !important;
+                }
+              }
+            `}
+          </style>
+          
+          <Table className="tax-implications-table">
+            <colgroup>
+              <col style={{ width: '20%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '50%' }} />
+              <col style={{ width: '15%' }} />
+            </colgroup>
+            <thead>
+              <tr>
+                <TableHeader>Investment Type</TableHeader>
+                <TableHeader>Typical Returns</TableHeader>
+                <TableHeader>Tax Implications</TableHeader>
+                <TableHeader>Tax Efficiency</TableHeader>
+              </tr>
+            </thead>
+            <tbody>
+              {investmentOptions.map((option, index) => (
+                <TableRow key={index}>
+                  <TableCell data-label="Investment Type"><strong>{option.name}</strong></TableCell>
+                  <TableCell data-label="Typical Returns">{option.typicalReturns}</TableCell>
+                  <TableCell data-label="Tax Implications">
+                    <div style={{ 
+                      marginBottom: '8px',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '4px'
+                    }}>
+                      {option.taxTags.map((tag, tagIndex) => (
+                        <Tooltip key={tagIndex} text={tag.tooltip}>
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            backgroundColor: `${tag.color}20`,
+                            color: tag.color,
+                            marginRight: '0',
+                            marginBottom: '0'
+                          }}>
+                            {tag.name}
+                          </span>
+                        </Tooltip>
+                      ))}
+                    </div>
+                    <div style={{ lineHeight: '1.5' }}>
+                      {option.taxImplications}
+                    </div>
+                  </TableCell>
+                  <TableCell data-label="Tax Efficiency">
+                    <Badge style={{ backgroundColor: `${getBadgeColor(option.taxEfficiency)}20`, color: getBadgeColor(option.taxEfficiency) }}>
+                      {option.taxEfficiency}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </tbody>
+          </Table>
+        </div>
         
         <Subtitle style={{ marginTop: '2rem' }}>Tax Efficiency Explained</Subtitle>
         <Paragraph>
