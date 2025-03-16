@@ -7,11 +7,12 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src'),
+      '@': '/src',
     },
   },
+  base: '/',
   build: {
-    outDir: 'build',
+    outDir: 'dist',
     sourcemap: true,
     minify: 'terser',
     terserOptions: {

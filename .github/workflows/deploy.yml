@@ -28,9 +28,13 @@ jobs:
         run: npm run build
         env:
           CI: false  # This prevents the build from failing on warnings
+          VITE_USE_CUSTOM_DOMAIN: true
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist  # The folder the action should deploy (Vite builds to 'dist' by default)
-          branch: gh-pages  # The branch the action should deploy to 
+          branch: gh-pages  # The branch the action should deploy to
+          clean: true  # Automatically remove deleted files from the deploy branch
+          clean-exclude: |
+            CNAME 
