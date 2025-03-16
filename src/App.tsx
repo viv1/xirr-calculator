@@ -296,7 +296,7 @@ function App() {
                 }}>
                   <span>1 Year</span>
                   <span>...</span>
-                  <span>{result ? Math.max(1, Math.min(30, result.cashflows?.filter(cf => cf.amount < 0).length / 12 || 10)) : 10} Years</span>
+                  <span>{result ? Math.max(1, Math.min(30, (result.cashflows ? result.cashflows.filter(cf => cf.amount < 0).length / 12 : 10) || 10)) : 10} Years</span>
                 </div>
               </div>
               
