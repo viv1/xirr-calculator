@@ -188,10 +188,6 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
       newErrors.paymentYears = 'Payment years must be greater than 0';
     }
     
-    if (formData.returnAmount > 0 && formData.returnStartYear <= formData.paymentYears) {
-      newErrors.returnStartYear = 'Return start year must be after payment years';
-    }
-    
     if (formData.returnYears < 0) {
       newErrors.returnYears = 'Return years cannot be negative';
     }
