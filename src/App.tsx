@@ -24,6 +24,58 @@ const defaultPlanValues: InvestmentPlan = {
   taxBracket: TaxBracket.ZERO
 };
 
+// Function to parse query parameters and return an investment plan
+const parseQueryParams = (): Partial<InvestmentPlan> => {
+  const params = new URLSearchParams(window.location.search);
+  const plan: Partial<InvestmentPlan> = {};
+  
+  // Parse numeric values
+  ['annualPayment', 'paymentYears', 'returnAmount', 'returnStartYear', 
+   'returnYears', 'finalReturnYear', 'finalReturnAmount'].forEach(key => {
+    const value = params.get(key);
+    if (value !== null) {
+      (plan as any)[key] = parseFloat(value);
+    }
+  });
+  
+  // Parse payment frequency
+  const paymentFreq = params.get('paymentFrequency');
+  if (paymentFreq && Object.values(PaymentFrequency).includes(paymentFreq as PaymentFrequency)) {
+    plan.paymentFrequency = paymentFreq as PaymentFrequency;
+  }
+  
+  // Parse return frequency
+  const returnFreq = params.get('returnFrequency');
+  if (returnFreq && Object.values(PaymentFrequency).includes(returnFreq as PaymentFrequency)) {
+    plan.returnFrequency = returnFreq as PaymentFrequency;
+  }
+  
+  // Parse tax bracket
+  const taxBracket = params.get('taxBracket');
+  if (taxBracket !== null) {
+    const taxValue = parseFloat(taxBracket);
+    if (!isNaN(taxValue) && Object.values(TaxBracket).includes(taxValue as TaxBracket)) {
+      plan.taxBracket = taxValue as TaxBracket;
+    }
+  }
+  
+  return plan;
+};
+
+// Function to update URL with current plan values
+const updateQueryParams = (plan: InvestmentPlan) => {
+  const params = new URLSearchParams();
+  
+  // Add all plan properties to query params
+  Object.entries(plan).forEach(([key, value]) => {
+    params.set(key, value.toString());
+  });
+  
+  // Update URL without reloading the page
+  const newUrl = `${window.location.pathname}?${params.toString()}`;
+  window.history.pushState({ path: newUrl }, '', newUrl);
+};
+
 function App() {
   const {
     result,
@@ -34,8 +86,19 @@ function App() {
   } = useInvestmentCalculator();
 
   const [activeTab, setActiveTab] = useState<string>('calculator');
-  const [currentPlan, setCurrentPlan] = useState<InvestmentPlan>(defaultPlanValues);
+  const [currentPlan, setCurrentPlan] = useState<InvestmentPlan>(() => {
+    // Initialize with query params or default values
+    const queryParams = parseQueryParams();
+    return { ...defaultPlanValues, ...queryParams };
+  });
   const [hasChanges, setHasChanges] = useState<boolean>(false);
+  
+  // Calculate results on initial load if query params are present
+  useEffect(() => {
+    if (Object.keys(parseQueryParams()).length > 0) {
+      calculateReturns(currentPlan);
+    }
+  }, []);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -82,6 +145,8 @@ function App() {
     setCurrentPlan(plan);
     calculateReturns(plan);
     setHasChanges(false);
+    // Update URL with current plan values
+    updateQueryParams(plan);
     scrollToResults(); // Scroll to results after calculation
   };
 
@@ -89,6 +154,8 @@ function App() {
     resetCalculator();
     setCurrentPlan(defaultPlanValues);
     setHasChanges(false);
+    // Clear query params
+    window.history.pushState({}, '', window.location.pathname);
   };
 
   return (
@@ -218,238 +285,257 @@ function App() {
               style={{
                 backgroundColor: colors.neutral.white,
                 borderRadius: '16px',
-                padding: '1.5rem',
+                padding: '1rem',
                 boxShadow: '0 10px 25px rgba(0, 0, 0, 0.05)',
                 border: `1px solid ${colors.neutral.lighter}`,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '1.5rem'
+                gap: '0.75rem'
               }}
             >
-              <h3 style={{ margin: 0, color: colors.primary.dark }}>Policy Summary</h3>
+              <h3 style={{ margin: 0, color: colors.primary.dark, fontSize: '1.1rem' }}>Policy Summary</h3>
               
               {/* Notification when changes are made */}
               {hasChanges && (
                 <div style={{
                   width: '100%',
-                  padding: '0.75rem',
+                  padding: '0.5rem',
                   backgroundColor: colors.warning.light + '20',
                   borderRadius: '8px',
                   border: `1px solid ${colors.warning.light}`,
-                  marginBottom: '1rem',
                   textAlign: 'center',
                   color: colors.warning.dark,
                   fontWeight: 'bold',
-                  fontSize: '0.9rem'
+                  fontSize: '0.8rem'
                 }}>
-                  You've made changes. Click "Calculate XIRR" to update results.
+                  Changes made. Click "Calculate XIRR" to update.
                 </div>
               )}
               
-              {/* Policy Start Section */}
+              {/* Timeline visualization */}
               <div style={{
                 width: '100%',
-                padding: '1.5rem',
-                backgroundColor: colors.neutral.lightest,
-                borderRadius: '8px',
-                border: `1px solid ${colors.neutral.light}`,
-                position: 'relative'
+                position: 'relative',
+                height: '180px',
+                marginBottom: '0.5rem',
+                marginTop: '0.5rem'
               }}>
-                <div style={{ 
-                  position: 'absolute', 
-                  top: '-12px', 
-                  left: '20px', 
-                  backgroundColor: colors.primary.main,
-                  color: 'white',
-                  padding: '2px 10px',
-                  borderRadius: '4px',
-                  fontSize: '0.8rem',
-                  fontWeight: 'bold'
-                }}>
-                  Policy Start: You Invest
-                </div>
-                
-                <div style={{ 
-                  fontSize: '1.5rem', 
-                  fontWeight: 'bold', 
-                  color: colors.primary.dark,
-                  textAlign: 'center',
-                  marginBottom: '0.5rem'
-                }}>
-                  {new Intl.NumberFormat('en-IN', {
-                    style: 'currency',
-                    currency: 'INR',
-                    maximumFractionDigits: 0,
-                    minimumFractionDigits: 0
-                  }).format(
-                    currentPlan.paymentFrequency === PaymentFrequency.MONTHLY ? currentPlan.annualPayment / 12 :
-                    currentPlan.paymentFrequency === PaymentFrequency.QUARTERLY ? currentPlan.annualPayment / 4 :
-                    currentPlan.paymentFrequency === PaymentFrequency.HALF_YEARLY ? currentPlan.annualPayment / 2 :
-                    currentPlan.annualPayment)} / {currentPlan.paymentFrequency === PaymentFrequency.MONTHLY ? "month" :
-                    currentPlan.paymentFrequency === PaymentFrequency.QUARTERLY ? "quarter" :
-                    currentPlan.paymentFrequency === PaymentFrequency.HALF_YEARLY ? "half-year" :
-                    "year"}
-                </div>
-                
-                <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-                  for {currentPlan.paymentYears} Years
-                </div>
-                
-                <div style={{ 
-                  backgroundColor: colors.primary.light + '20', 
-                  padding: '0.5rem', 
-                  borderRadius: '4px',
-                  textAlign: 'center',
-                  fontWeight: 'bold',
-                  color: colors.primary.dark
-                }}>
-                  Total: {new Intl.NumberFormat('en-IN', {
-                    style: 'currency',
-                    currency: 'INR',
-                    maximumFractionDigits: 0
-                  }).format(currentPlan.annualPayment * currentPlan.paymentYears)}
-                </div>
-                
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  marginTop: '1rem',
-                  color: colors.neutral.dark,
-                  fontSize: '0.8rem'
-                }}>
-                  <span>1 Year</span>
-                  <span>...</span>
-                  <span>{currentPlan.paymentYears} Years</span>
-                </div>
-              </div>
-              
-              {/* Returns Section */}
-              <div style={{
-                width: '100%',
-                padding: '1.5rem',
-                backgroundColor: colors.neutral.lightest,
-                borderRadius: '8px',
-                border: `1px solid ${colors.neutral.light}`,
-                position: 'relative'
-              }}>
-                <div style={{ 
-                  position: 'absolute', 
-                  top: '-12px', 
-                  left: '20px', 
-                  backgroundColor: colors.success.main,
-                  color: 'white',
-                  padding: '2px 10px',
-                  borderRadius: '4px',
-                  fontSize: '0.8rem',
-                  fontWeight: 'bold'
-                }}>
-                  From {currentPlan.returnStartYear}th Year You Get
-                </div>
-                
-                <div style={{ 
-                  fontSize: '1.5rem', 
-                  fontWeight: 'bold', 
-                  color: colors.success.dark,
-                  textAlign: 'center',
-                  marginBottom: '0.5rem'
-                }}>
-                  {new Intl.NumberFormat('en-IN', {
-                    style: 'currency',
-                    currency: 'INR',
-                    maximumFractionDigits: 0,
-                    minimumFractionDigits: 0
-                  }).format(
-                    currentPlan.returnFrequency === PaymentFrequency.MONTHLY ? currentPlan.returnAmount / 12 :
-                    currentPlan.returnFrequency === PaymentFrequency.QUARTERLY ? currentPlan.returnAmount / 4 :
-                    currentPlan.returnFrequency === PaymentFrequency.HALF_YEARLY ? currentPlan.returnAmount / 2 :
-                    currentPlan.returnAmount)} / {currentPlan.returnFrequency === PaymentFrequency.MONTHLY ? "month" :
-                    currentPlan.returnFrequency === PaymentFrequency.QUARTERLY ? "quarter" :
-                    currentPlan.returnFrequency === PaymentFrequency.HALF_YEARLY ? "half-year" :
-                    "year"}
-                </div>
-                
-                <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-                  for {currentPlan.returnYears} Years
-                </div>
-                
-                <div style={{ 
-                  backgroundColor: colors.success.light + '20', 
-                  padding: '0.5rem', 
-                  borderRadius: '4px',
-                  textAlign: 'center',
-                  fontWeight: 'bold',
-                  color: colors.success.dark
-                }}>
-                  Total: {new Intl.NumberFormat('en-IN', {
-                    style: 'currency',
-                    currency: 'INR',
-                    maximumFractionDigits: 0
-                  }).format(currentPlan.returnAmount * currentPlan.returnYears)}
-                </div>
-                
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  marginTop: '1rem',
-                  color: colors.neutral.dark,
-                  fontSize: '0.8rem'
-                }}>
-                  <span>{currentPlan.returnStartYear} Year</span>
-                  <span>...</span>
-                  <span>{currentPlan.returnStartYear + currentPlan.returnYears - 1} Years</span>
-                </div>
-              </div>
-              
-              {/* Lumpsum Section */}
-              {currentPlan.finalReturnYear > 0 && (
+                {/* Timeline line */}
                 <div style={{
-                  width: '100%',
-                  padding: '1.5rem',
-                  backgroundColor: colors.neutral.lightest,
-                  borderRadius: '8px',
-                  border: `1px solid ${colors.neutral.light}`,
-                  position: 'relative'
+                  position: 'absolute',
+                  top: '80px',
+                  left: '0',
+                  right: '0',
+                  height: '2px',
+                  backgroundColor: colors.neutral.light,
+                  zIndex: 1
+                }}></div>
+                
+                {/* Year markers */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '0',
+                  left: '0',
+                  right: '0',
+                  height: '20px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  color: colors.neutral.dark,
+                  fontSize: '0.7rem',
+                  zIndex: 1
                 }}>
-                  <div style={{ 
-                    position: 'absolute', 
-                    top: '-12px', 
-                    left: '20px', 
-                    backgroundColor: colors.secondary.main,
-                    color: 'white',
-                    padding: '2px 10px',
-                    borderRadius: '4px',
-                    fontSize: '0.8rem',
-                    fontWeight: 'bold'
+                  <span>Year 1</span>
+                  <span>Year {Math.max(
+                    currentPlan.paymentYears,
+                    currentPlan.returnStartYear + currentPlan.returnYears - 1,
+                    currentPlan.finalReturnYear
+                  )}</span>
+                </div>
+                
+                {/* Payment period */}
+                <div style={{
+                  position: 'absolute',
+                  top: '40px',
+                  left: '0',
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  zIndex: 2
+                }}>
+                  <div style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 'bold',
+                    color: colors.primary.dark,
+                    marginBottom: '5px',
+                    width: '100%',
+                    whiteSpace: 'normal'
                   }}>
-                    Additional Lumpsum Amount
-                  </div>
-                  
-                  <div style={{ 
-                    fontSize: '1.5rem', 
-                    fontWeight: 'bold', 
-                    color: colors.secondary.dark,
-                    textAlign: 'center',
-                    marginBottom: '0.5rem'
-                  }}>
-                    {new Intl.NumberFormat('en-IN', {
+                    Pay {new Intl.NumberFormat('en-IN', {
                       style: 'currency',
                       currency: 'INR',
                       maximumFractionDigits: 0
-                    }).format(currentPlan.finalReturnAmount)}
+                    }).format(
+                      currentPlan.paymentFrequency === PaymentFrequency.MONTHLY ? currentPlan.annualPayment / 12 :
+                      currentPlan.paymentFrequency === PaymentFrequency.QUARTERLY ? currentPlan.annualPayment / 4 :
+                      currentPlan.paymentFrequency === PaymentFrequency.HALF_YEARLY ? currentPlan.annualPayment / 2 :
+                      currentPlan.annualPayment)}/{currentPlan.paymentFrequency.toLowerCase()} for {currentPlan.paymentYears} years
                   </div>
-                  
-                  <div style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
-                    On {currentPlan.finalReturnYear}th Year
-                  </div>
+                  <div style={{
+                    width: `${Math.min(100, (currentPlan.paymentYears / Math.max(
+                      currentPlan.paymentYears,
+                      currentPlan.returnStartYear + currentPlan.returnYears - 1,
+                      currentPlan.finalReturnYear
+                    )) * 100)}%`,
+                    height: '8px',
+                    backgroundColor: colors.primary.main,
+                    borderRadius: '4px'
+                  }}></div>
                 </div>
-              )}
+                
+                {/* Return period */}
+                {currentPlan.returnYears > 0 && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '90px',
+                    left: '0',
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    zIndex: 2
+                  }}>
+                    <div style={{
+                      width: `${(currentPlan.returnYears / Math.max(
+                        currentPlan.paymentYears,
+                        currentPlan.returnStartYear + currentPlan.returnYears - 1,
+                        currentPlan.finalReturnYear
+                      )) * 100}%`,
+                      height: '8px',
+                      backgroundColor: colors.success.main,
+                      borderRadius: '4px',
+                      marginLeft: `${(currentPlan.returnStartYear / Math.max(
+                        currentPlan.paymentYears,
+                        currentPlan.returnStartYear + currentPlan.returnYears - 1,
+                        currentPlan.finalReturnYear
+                      )) * 100}%`
+                    }}></div>
+                    <div style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 'bold',
+                      color: colors.success.dark,
+                      marginTop: '5px',
+                      width: '100%',
+                      whiteSpace: 'normal'
+                    }}>
+                      Get {new Intl.NumberFormat('en-IN', {
+                        style: 'currency',
+                        currency: 'INR',
+                        maximumFractionDigits: 0
+                      }).format(
+                        currentPlan.returnFrequency === PaymentFrequency.MONTHLY ? currentPlan.returnAmount / 12 :
+                        currentPlan.returnFrequency === PaymentFrequency.QUARTERLY ? currentPlan.returnAmount / 4 :
+                        currentPlan.returnFrequency === PaymentFrequency.HALF_YEARLY ? currentPlan.returnAmount / 2 :
+                        currentPlan.returnAmount)}/{currentPlan.returnFrequency.toLowerCase()} for {currentPlan.returnYears} years (Year {currentPlan.returnStartYear}-{currentPlan.returnStartYear + currentPlan.returnYears - 1})
+                    </div>
+                  </div>
+                )}
+                
+                {/* Final return */}
+                {currentPlan.finalReturnYear > 0 && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '130px',
+                    left: '0',
+                    width: '100%',
+                    zIndex: 3
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      width: '100%',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{
+                        width: '10px',
+                        height: '10px',
+                        backgroundColor: colors.secondary.main,
+                        borderRadius: '50%',
+                        marginLeft: `${(currentPlan.finalReturnYear / Math.max(
+                          currentPlan.paymentYears,
+                          currentPlan.returnStartYear + currentPlan.returnYears - 1,
+                          currentPlan.finalReturnYear
+                        )) * 100}%`,
+                        flexShrink: 0
+                      }}></div>
+                    </div>
+                    
+                    {/* Separate text element that's not tied to dot position */}
+                    <div style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 'bold',
+                      color: colors.secondary.dark,
+                      marginTop: '5px',
+                      width: '100%',
+                      textAlign: 'left'
+                    }}>
+                      Lumpsum {new Intl.NumberFormat('en-IN', {
+                        style: 'currency',
+                        currency: 'INR',
+                        maximumFractionDigits: 0
+                      }).format(currentPlan.finalReturnAmount)} at Year {currentPlan.finalReturnYear}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Add responsive styles for the timeline */}
+              <style>
+                {`
+                  @media (max-width: 480px) {
+                    .policy-summary .timeline-label {
+                      font-size: 0.6rem !important;
+                    }
+                  }
+                `}
+              </style>
+              
+              {/* Summary stats */}
+              <div style={{
+                display: 'flex',
+                width: '100%',
+                justifyContent: 'space-between',
+                fontSize: '0.8rem',
+                padding: '0.5rem',
+                backgroundColor: colors.neutral.lightest,
+                borderRadius: '8px',
+              }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', color: colors.primary.dark }}>Total Investment</div>
+                  <div>{new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: 'INR',
+                    maximumFractionDigits: 0
+                  }).format(currentPlan.annualPayment * currentPlan.paymentYears)}</div>
+                </div>
+                
+                <div>
+                  <div style={{ fontWeight: 'bold', color: colors.success.dark }}>Total Returns</div>
+                  <div>{new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: 'INR',
+                    maximumFractionDigits: 0
+                  }).format((currentPlan.returnAmount * currentPlan.returnYears) + (currentPlan.finalReturnYear > 0 ? currentPlan.finalReturnAmount : 0))}</div>
+                </div>
+              </div>
               
               <Button
                 onClick={() => {
                   const form = document.querySelector('form');
                   if (form) {
-                    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    // Create and dispatch a submit event
+                    const submitEvent = new Event('submit', { cancelable: true, bubbles: true });
+                    form.dispatchEvent(submitEvent);
                   }
                 }}
                 style={{
