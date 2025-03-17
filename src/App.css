@@ -91,10 +91,13 @@
     position: static !important;
     margin-top: 2rem;
     order: 2 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
   
   .form-section {
     order: 1 !important;
+    width: 100% !important;
   }
   
   .result-grid {

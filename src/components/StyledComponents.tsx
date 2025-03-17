@@ -651,4 +651,63 @@ export const collapse = {
       opacity: { duration: 0.3, delay: 0.1 }
     }
   }
-}; 
+};
+
+export const NumberInputContainer = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+export const NumberInput = styled(Input)`
+  padding-right: 2.5rem;
+  width: 100%;
+  
+  /* Hide default arrows in number inputs */
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  /* Firefox */
+  -moz-appearance: textfield;
+`;
+
+export const NumberControls = styled.div`
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: 2rem;
+  border-left: 1px solid ${colors.neutral.light};
+`;
+
+export const NumberButton = styled.button`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: ${colors.neutral.dark};
+  padding: 0;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: ${colors.neutral.lighter};
+    color: ${colors.primary.main};
+  }
+  
+  &:first-child {
+    border-bottom: 1px solid ${colors.neutral.light};
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`; 

@@ -20,6 +20,7 @@ import {
   SliderValue,
   colors
 } from './StyledComponents';
+import NumberInputField from './NumberInputField';
 
 interface InvestmentFormProps {
   onCalculate: (plan: InvestmentPlan) => void;
@@ -129,6 +130,20 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
     setReturnDisplay(getDisplayAmount(formData.returnAmount, formData.returnFrequency));
   }, [formData.annualPayment, formData.returnAmount, formData.paymentFrequency, formData.returnFrequency]);
 
+  // Update final return year minimum when start year or return years change
+  useEffect(() => {
+    if (formData.returnAmount > 0 && formData.returnYears > 0) {
+      const lastRegularReturnYear = formData.returnStartYear + formData.returnYears - 1;
+      
+      if (formData.finalReturnYear > 0 && formData.finalReturnYear < lastRegularReturnYear) {
+        setFormData(prev => ({
+          ...prev,
+          finalReturnYear: lastRegularReturnYear
+        }));
+      }
+    }
+  }, [formData.returnStartYear, formData.returnYears]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
@@ -145,10 +160,27 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
         [name]: parseFloat(value) as TaxBracket
       };
     } else {
-      updatedFormData = {
-        ...formData,
-        [name]: parseFloat(value) || 0
-      };
+      // Ensure whole numbers for year fields
+      if (['paymentYears', 'returnStartYear', 'returnYears', 'finalReturnYear'].includes(name)) {
+        updatedFormData = {
+          ...formData,
+          [name]: Math.floor(parseFloat(value)) || 0
+        };
+      } else {
+        updatedFormData = {
+          ...formData,
+          [name]: parseFloat(value) || 0
+        };
+      }
+    }
+    
+    // Handle validation for finalReturnYear
+    if (name === 'finalReturnYear' && updatedFormData.returnAmount > 0 && updatedFormData.returnYears > 0) {
+      const lastRegularReturnYear = updatedFormData.returnStartYear + updatedFormData.returnYears - 1;
+      
+      if (updatedFormData.finalReturnYear > 0 && updatedFormData.finalReturnYear < lastRegularReturnYear) {
+        updatedFormData.finalReturnYear = lastRegularReturnYear;
+      }
     }
     
     setFormData(updatedFormData);
@@ -206,6 +238,48 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  // Helper function for tooltips
+  const InfoIcon = ({ tooltip }: { tooltip: string }) => (
+    <span 
+      style={{ 
+        marginLeft: '0.5rem', 
+        cursor: 'help',
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '16px',
+        height: '16px',
+        borderRadius: '50%',
+        backgroundColor: colors.primary.light,
+        color: 'white',
+        fontSize: '10px',
+        fontWeight: 'bold'
+      }}
+      data-tooltip={tooltip}
+      className="tooltip-trigger"
+    >
+      i
+      <div className="tooltip-content" style={{
+        position: 'absolute',
+        bottom: '100%',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: colors.neutral.dark,
+        color: 'white',
+        padding: '0.5rem',
+        borderRadius: '4px',
+        width: '200px',
+        zIndex: 100,
+        fontSize: '12px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+        display: 'none',
+      }}>
+        {tooltip}
+      </div>
+    </span>
+  );
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -227,51 +301,82 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
     onReset();
   };
 
+  // Calculate minimum value for final return year
+  const getMinFinalReturnYear = (): number => {
+    if (formData.returnAmount > 0 && formData.returnYears > 0) {
+      return formData.returnStartYear + formData.returnYears - 1;
+    }
+    return 0;
+  };
+
+  // Add CSS for tooltips
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .tooltip-trigger:hover .tooltip-content {
+        display: block !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   return (
-    <Card
-      initial="hidden"
-      animate="visible"
-      variants={fadeIn}
-    >
-      <Subtitle>
-        Investment Plan Details
-      </Subtitle>
-      <InfoText>
-        Enter the details of your investment plan to calculate the actual returns.
-      </InfoText>
-      
+    <Card>
       <FormContainer as="form" onSubmit={handleSubmit}>
-        <motion.div variants={slideUp}>
-          <FormGroup className="form-group">
-            <Label className="form-label" htmlFor="paymentFrequency">Investment Frequency</Label>
-            <Select
-              className="form-select"
-              id="paymentFrequency"
-              name="paymentFrequency"
-              value={formData.paymentFrequency}
-              onChange={handleChange}
-              disabled={loading}
-            >
-              <option value={PaymentFrequency.ANNUAL}>Annual</option>
-              <option value={PaymentFrequency.HALF_YEARLY}>Half-Yearly</option>
-              <option value={PaymentFrequency.QUARTERLY}>Quarterly</option>
-              <option value={PaymentFrequency.MONTHLY}>Monthly</option>
-            </Select>
-          </FormGroup>
+        <motion.div
+          variants={fadeIn}
+          initial="hidden"
+          animate="visible"
+        >
+          <Subtitle>Investment Details</Subtitle>
           
-          <FormGroup className="form-group">
-            <Label className="form-label" htmlFor="annualPayment">{paymentDisplay.label}</Label>
-            <Flex>
-              <Input
-                className="form-input"
-                type="number"
-                id="annualPayment"
-                name="annualPayment"
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <FormGroup style={{ flex: '1 1 60%', minWidth: '200px' }}>
+              <Label htmlFor="annualPayment">{paymentDisplay.label}</Label>
+              <Flex>
+                <Input
+                  type="number"
+                  id="annualPayment"
+                  name="annualPayment"
+                  value={formData.paymentFrequency === PaymentFrequency.ANNUAL ? 
+                    formData.annualPayment : 
+                    paymentDisplay.value}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value) || 0;
+                    let annualValue = value;
+                    
+                    // Convert to annual value based on frequency
+                    if (formData.paymentFrequency === PaymentFrequency.MONTHLY) {
+                      annualValue = value * 12;
+                    } else if (formData.paymentFrequency === PaymentFrequency.QUARTERLY) {
+                      annualValue = value * 4;
+                    } else if (formData.paymentFrequency === PaymentFrequency.HALF_YEARLY) {
+                      annualValue = value * 2;
+                    }
+                    
+                    setFormData(prev => ({
+                      ...prev,
+                      annualPayment: annualValue
+                    }));
+                  }}
+                  disabled={loading}
+                  min="0"
+                />
+              </Flex>
+              <Slider
+                type="range"
+                id="annualPaymentSlider"
+                min="0"
+                max="3000000"
+                step="10000"
                 value={formData.paymentFrequency === PaymentFrequency.ANNUAL ? 
                   formData.annualPayment : 
                   paymentDisplay.value}
                 onChange={(e) => {
-                  const value = parseFloat(e.target.value) || 0;
+                  const value = parseFloat(e.target.value);
                   let annualValue = value;
                   
                   // Convert to annual value based on frequency
@@ -283,111 +388,99 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
                     annualValue = value * 2;
                   }
                   
-                  setFormData(prev => ({
-                    ...prev,
-                    annualPayment: annualValue
-                  }));
+                  handleSliderChange('annualPayment', annualValue);
                 }}
                 disabled={loading}
-                min="0"
               />
-            </Flex>
-            <Slider
-              className="form-slider"
-              id="annualPayment-slider"
-              min="0"
-              max="1000000"
-              step="10000"
-              value={formData.paymentFrequency === PaymentFrequency.ANNUAL ? 
-                formData.annualPayment : 
-                paymentDisplay.value}
-              onChange={(e) => {
-                const value = parseFloat(e.target.value);
-                let annualValue = value;
-                
-                // Convert to annual value based on frequency
-                if (formData.paymentFrequency === PaymentFrequency.MONTHLY) {
-                  annualValue = value * 12;
-                } else if (formData.paymentFrequency === PaymentFrequency.QUARTERLY) {
-                  annualValue = value * 4;
-                } else if (formData.paymentFrequency === PaymentFrequency.HALF_YEARLY) {
-                  annualValue = value * 2;
-                }
-                
-                handleSliderChange('annualPayment', annualValue);
-              }}
-              disabled={loading}
-            />
-            <SliderValue>
-              <span>₹0</span>
-              <span>₹10L</span>
-            </SliderValue>
-            {errors.annualPayment && <ErrorText>{errors.annualPayment}</ErrorText>}
-          </FormGroup>
+              <SliderValue>
+                <span>₹0</span>
+                <span>₹30L</span>
+              </SliderValue>
+              {errors.annualPayment && <ErrorText>{errors.annualPayment}</ErrorText>}
+            </FormGroup>
+            
+            <FormGroup style={{ flex: '1 1 30%', minWidth: '150px' }}>
+              <Label htmlFor="paymentFrequency">Frequency</Label>
+              <Select
+                id="paymentFrequency"
+                name="paymentFrequency"
+                value={formData.paymentFrequency}
+                onChange={handleChange}
+                disabled={loading}
+              >
+                <option value={PaymentFrequency.ANNUAL}>Annual</option>
+                <option value={PaymentFrequency.HALF_YEARLY}>Half-Yearly</option>
+                <option value={PaymentFrequency.QUARTERLY}>Quarterly</option>
+                <option value={PaymentFrequency.MONTHLY}>Monthly</option>
+              </Select>
+            </FormGroup>
+          </div>
           
-          <FormGroup className="form-group">
-            <Label className="form-label" htmlFor="paymentYears">Investment Duration (Years)</Label>
-            <Flex>
-              <Input
-                type="number"
+          <FormGroup>
+            <Label htmlFor="paymentYears">
+              Payment Period (Years)
+              <InfoIcon tooltip="The number of years you will be making payments into the plan" />
+            </Label>
+            <div style={{ width: '100%', maxWidth: '150px' }}>
+              <NumberInputField
                 id="paymentYears"
                 name="paymentYears"
                 value={formData.paymentYears}
                 onChange={handleChange}
+                min={1}
+                max={30}
                 disabled={loading}
-                min="1"
-                max="50"
-                step="1"
               />
-            </Flex>
-            <Slider
-              className="form-slider"
-              id="paymentYears-slider"
-              min="1"
-              max="50"
-              step="1"
-              value={formData.paymentYears}
-              onChange={(e) => handleSliderChange('paymentYears', parseInt(e.target.value))}
-              disabled={loading}
-            />
-            <SliderValue>
-              <span>1 year</span>
-              <span>50 years</span>
-            </SliderValue>
+            </div>
             {errors.paymentYears && <ErrorText>{errors.paymentYears}</ErrorText>}
           </FormGroup>
           
-          <Divider style={{ margin: '1.5rem 0' }} />
+          <Subtitle style={{ marginTop: '1.5rem' }}>Return Details</Subtitle>
           
-          <FormGroup className="form-group">
-            <Label className="form-label" htmlFor="returnFrequency">Return Frequency</Label>
-            <Select
-              className="form-select"
-              id="returnFrequency"
-              name="returnFrequency"
-              value={formData.returnFrequency}
-              onChange={handleChange}
-              disabled={loading}
-            >
-              <option value={PaymentFrequency.ANNUAL}>Annual</option>
-              <option value={PaymentFrequency.HALF_YEARLY}>Half-Yearly</option>
-              <option value={PaymentFrequency.QUARTERLY}>Quarterly</option>
-              <option value={PaymentFrequency.MONTHLY}>Monthly</option>
-            </Select>
-          </FormGroup>
-          
-          <FormGroup>
-            <Label htmlFor="returnAmount">{returnDisplay.label}</Label>
-            <Flex>
-              <Input
-                type="number"
-                id="returnAmount"
-                name="returnAmount"
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <FormGroup style={{ flex: '1 1 60%', minWidth: '200px' }}>
+              <Label htmlFor="returnAmount">{returnDisplay.label}</Label>
+              <Flex>
+                <Input
+                  type="number"
+                  id="returnAmount"
+                  name="returnAmount"
+                  value={formData.returnFrequency === PaymentFrequency.ANNUAL ? 
+                    formData.returnAmount : 
+                    returnDisplay.value}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value) || 0;
+                    let annualValue = value;
+                    
+                    // Convert to annual value based on frequency
+                    if (formData.returnFrequency === PaymentFrequency.MONTHLY) {
+                      annualValue = value * 12;
+                    } else if (formData.returnFrequency === PaymentFrequency.QUARTERLY) {
+                      annualValue = value * 4;
+                    } else if (formData.returnFrequency === PaymentFrequency.HALF_YEARLY) {
+                      annualValue = value * 2;
+                    }
+                    
+                    setFormData(prev => ({
+                      ...prev,
+                      returnAmount: annualValue
+                    }));
+                  }}
+                  disabled={loading}
+                  min="0"
+                />
+              </Flex>
+              <Slider
+                type="range"
+                id="returnAmountSlider"
+                min="0"
+                max="20000000"
+                step="10000"
                 value={formData.returnFrequency === PaymentFrequency.ANNUAL ? 
                   formData.returnAmount : 
                   returnDisplay.value}
                 onChange={(e) => {
-                  const value = parseFloat(e.target.value) || 0;
+                  const value = parseFloat(e.target.value);
                   let annualValue = value;
                   
                   // Convert to annual value based on frequency
@@ -399,153 +492,99 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
                     annualValue = value * 2;
                   }
                   
-                  setFormData(prev => ({
-                    ...prev,
-                    returnAmount: annualValue
-                  }));
+                  handleSliderChange('returnAmount', annualValue);
                 }}
                 disabled={loading}
-                min="0"
               />
-            </Flex>
-            <Slider
-              id="returnAmount-slider"
-              min="0"
-              max="1000000"
-              step="10000"
-              value={formData.returnFrequency === PaymentFrequency.ANNUAL ? 
-                formData.returnAmount : 
-                returnDisplay.value}
-              onChange={(e) => {
-                const value = parseFloat(e.target.value);
-                let annualValue = value;
-                
-                // Convert to annual value based on frequency
-                if (formData.returnFrequency === PaymentFrequency.MONTHLY) {
-                  annualValue = value * 12;
-                } else if (formData.returnFrequency === PaymentFrequency.QUARTERLY) {
-                  annualValue = value * 4;
-                } else if (formData.returnFrequency === PaymentFrequency.HALF_YEARLY) {
-                  annualValue = value * 2;
-                }
-                
-                handleSliderChange('returnAmount', annualValue);
-              }}
-              disabled={loading}
-            />
-            <SliderValue>
-              <span>₹0</span>
-              <span>₹10L</span>
-            </SliderValue>
-          </FormGroup>
-          
-          <FormGroup>
-            <Label className="form-label" htmlFor="returnStartYear">Return Start Year</Label>
-            <Flex>
-              <Input
-                type="number"
-                id="returnStartYear"
-                name="returnStartYear"
-                value={formData.returnStartYear}
-                onChange={handleChange}
-                disabled={loading || formData.returnAmount === 0}
-                min="1"
-                max="80"
-                step="1"
-              />
-            </Flex>
-            <Slider
-              className="form-slider"
-              id="returnStartYear-slider"
-              min="1"
-              max="80"
-              step="1"
-              value={formData.returnStartYear}
-              onChange={(e) => handleSliderChange('returnStartYear', parseInt(e.target.value))}
-              disabled={loading || formData.returnAmount === 0}
-            />
-            <SliderValue>
-              <span>1 year</span>
-              <span>80 years</span>
-            </SliderValue>
-            {errors.returnStartYear && <ErrorText>{errors.returnStartYear}</ErrorText>}
-          </FormGroup>
-          
-          <FormGroup>
-            <Label htmlFor="returnYears">Return Duration (Years)</Label>
-            <Flex>
-              <Input
-                type="number"
-                id="returnYears"
-                name="returnYears"
-                value={formData.returnYears}
-                onChange={handleChange}
-                disabled={loading || formData.returnAmount === 0}
-                min="0"
-                max="80"
-                step="1"
-              />
-            </Flex>
-            <Slider
-              id="returnYears-slider"
-              min="0"
-              max="80"
-              step="1"
-              value={formData.returnYears}
-              onChange={(e) => handleSliderChange('returnYears', parseInt(e.target.value))}
-              disabled={loading || formData.returnAmount === 0}
-            />
-            <SliderValue>
-              <span>0 years</span>
-              <span>80 years</span>
-            </SliderValue>
-            {errors.returnYears && <ErrorText>{errors.returnYears}</ErrorText>}
-          </FormGroup>
-          
-          <Divider style={{ margin: '1.5rem 0' }} />
-          
-          <FormGroup>
-            <Label className="form-label" htmlFor="finalReturnYear">Final Return Year (Maturity/Lumpsum)</Label>
-            <Flex>
-              <Input
-                type="number"
-                id="finalReturnYear"
-                name="finalReturnYear"
-                value={formData.finalReturnYear}
+              <SliderValue>
+                <span>₹0</span>
+                <span>₹2Cr</span>
+              </SliderValue>
+              {errors.returnAmount && <ErrorText>{errors.returnAmount}</ErrorText>}
+            </FormGroup>
+            
+            <FormGroup style={{ flex: '1 1 30%', minWidth: '150px' }}>
+              <Label htmlFor="returnFrequency">Frequency</Label>
+              <Select
+                id="returnFrequency"
+                name="returnFrequency"
+                value={formData.returnFrequency}
                 onChange={handleChange}
                 disabled={loading}
-                min="0"
-                max="100"
-                step="1"
-              />
-            </Flex>
-            <Slider
-              id="finalReturnYear-slider"
-              min="0"
-              max="100"
-              step="1"
-              value={formData.finalReturnYear}
-              onChange={(e) => handleSliderChange('finalReturnYear', parseInt(e.target.value))}
-              disabled={loading}
-            />
-            <SliderValue>
-              <span>0 (None)</span>
-              <span>100 years</span>
-            </SliderValue>
-            <InfoText>
-              Set to 0 if there is no lumpsum payment at the end
-              {formData.returnAmount > 0 && formData.returnYears > 0 && (
-                <>
-                  <br />
-                  Minimum valid input: {formData.returnStartYear + formData.returnYears - 1} (last regular return year)
-                </>
-              )}
-            </InfoText>
-            {errors.finalReturnYear && <ErrorText>{errors.finalReturnYear}</ErrorText>}
-          </FormGroup>
+              >
+                <option value={PaymentFrequency.ANNUAL}>Annual</option>
+                <option value={PaymentFrequency.HALF_YEARLY}>Half-Yearly</option>
+                <option value={PaymentFrequency.QUARTERLY}>Quarterly</option>
+                <option value={PaymentFrequency.MONTHLY}>Monthly</option>
+              </Select>
+            </FormGroup>
+          </div>
           
-          <FormGroup>
-            <Label className="form-label" htmlFor="finalReturnAmount">Final Return Amount (Maturity/Lumpsum)</Label>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <FormGroup style={{ flex: '1 1 30%', minWidth: '150px' }}>
+              <Label htmlFor="returnStartYear">
+                Start Year
+                <InfoIcon tooltip="The year when you start receiving regular returns" />
+              </Label>
+              <div style={{ width: '100%' }}>
+                <NumberInputField
+                  id="returnStartYear"
+                  name="returnStartYear"
+                  value={formData.returnStartYear}
+                  onChange={handleChange}
+                  min={1}
+                  max={30}
+                  disabled={loading}
+                />
+              </div>
+              {errors.returnStartYear && <ErrorText>{errors.returnStartYear}</ErrorText>}
+            </FormGroup>
+            
+            <FormGroup style={{ flex: '1 1 30%', minWidth: '150px' }}>
+              <Label htmlFor="returnYears">
+                Return Years
+                <InfoIcon tooltip="The number of years you will receive regular returns" />
+              </Label>
+              <div style={{ width: '100%' }}>
+                <NumberInputField
+                  id="returnYears"
+                  name="returnYears"
+                  value={formData.returnYears}
+                  onChange={handleChange}
+                  min={0}
+                  max={30}
+                  disabled={loading}
+                />
+              </div>
+              <InfoText>Set to 0 if there are no regular returns.</InfoText>
+              {errors.returnYears && <ErrorText>{errors.returnYears}</ErrorText>}
+            </FormGroup>
+            
+            <FormGroup style={{ flex: '1 1 30%', minWidth: '150px' }}>
+              <Label htmlFor="finalReturnYear">
+                Final Year
+                <InfoIcon tooltip="The year when you receive the final lump sum amount" />
+              </Label>
+              <div style={{ width: '100%' }}>
+                <NumberInputField
+                  id="finalReturnYear"
+                  name="finalReturnYear"
+                  value={formData.finalReturnYear}
+                  onChange={handleChange}
+                  min={getMinFinalReturnYear()}
+                  disabled={loading}
+                />
+              </div>
+              <InfoText>Set to 0 if no lump sum. {getMinFinalReturnYear() > 0 && `Min: Year ${getMinFinalReturnYear()}`}</InfoText>
+              {errors.finalReturnYear && <ErrorText>{errors.finalReturnYear}</ErrorText>}
+            </FormGroup>
+          </div>
+          
+          <FormGroup style={{ flex: '1', minWidth: '200px' }}>
+            <Label htmlFor="finalReturnAmount">
+              Final Lumpsum Return Amount
+              <InfoIcon tooltip="The lump sum amount received at the end of the plan" />
+            </Label>
             <Flex>
               <Input
                 type="number"
@@ -553,33 +592,33 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
                 name="finalReturnAmount"
                 value={formData.finalReturnAmount}
                 onChange={handleChange}
-                disabled={loading || formData.finalReturnYear === 0}
+                disabled={loading}
                 min="0"
               />
             </Flex>
             <Slider
-              id="finalReturnAmount-slider"
+              type="range"
+              id="finalReturnAmountSlider"
               min="0"
               max="20000000"
-              step="100000"
+              step="10000"
               value={formData.finalReturnAmount}
               onChange={(e) => handleSliderChange('finalReturnAmount', parseInt(e.target.value))}
-              disabled={loading || formData.finalReturnYear === 0}
+              disabled={loading}
             />
             <SliderValue>
               <span>₹0</span>
               <span>₹2Cr</span>
             </SliderValue>
+            {errors.finalReturnAmount && <ErrorText>{errors.finalReturnAmount}</ErrorText>}
           </FormGroup>
           
-          <Divider style={{ margin: '1.5rem 0' }} />
-          
-          <FormGroup className="form-group">
-            <Label className="form-label" htmlFor="taxBracket">Your Tax Bracket</Label>
+          <FormGroup>
+            <Label htmlFor="taxBracket">Your Tax Bracket</Label>
             <Select
               id="taxBracket"
               name="taxBracket"
-              value={(formData.taxBracket || TaxBracket.ZERO).toString()}
+              value={formData.taxBracket?.toString() || '0'}
               onChange={handleChange}
               disabled={loading}
             >

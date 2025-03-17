@@ -19,6 +19,7 @@ import {
   Button,
   CollapsibleHeader
 } from './StyledComponents';
+import ShareOptions from './ShareOptions';
 
 interface ResultsDisplayProps {
   result: CalculationResult | null;
@@ -132,11 +133,25 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, ha
         animate="visible"
       >
         <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: hasChanges ? '0.5rem' : '0' }}>
-            <Subtitle style={{ margin: 0 }}>
-              Investment Returns Analysis
-              {getRatingBadge(result.xirr)}
-            </Subtitle>
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            gap: '0.75rem',
+            marginBottom: hasChanges ? '0.5rem' : '0' 
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.75rem'
+            }}>
+              <Subtitle style={{ margin: 0 }}>
+                Investment Returns Analysis
+                {getRatingBadge(result.xirr)}
+              </Subtitle>
+              <ShareOptions compact={true} />
+            </div>
           </div>
           
           {hasChanges && (
@@ -559,6 +574,22 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, ha
               </InfoText>
             </motion.div>
           )}
+
+          {/* Add ShareOptions at the bottom */}
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            marginTop: '2rem',
+            borderTop: `1px solid ${colors.neutral.light}`,
+            paddingTop: '1.5rem'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ marginBottom: '0.75rem', color: colors.neutral.dark, fontSize: '0.9rem' }}>
+                Share these results with others
+              </div>
+              <ShareOptions compact={false} />
+            </div>
+          </div>
         </Card>
         
         {/* Go to Top floating button */}
