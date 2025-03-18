@@ -1,6 +1,6 @@
 import React, { ReactElement, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalculationResult, TaxBracket, CashFlow } from '../types';
+import { CalculationResult, TaxBracket, CashFlow, InvestmentPlan } from '../types';
 import { formatPercentage } from '../utils/financialCalculations';
 import {
   ResultsContainer,
@@ -25,9 +25,10 @@ interface ResultsDisplayProps {
   result: CalculationResult | null;
   onTabChange?: (tab: string) => void;
   hasChanges?: boolean;
+  plan: InvestmentPlan;
 }
 
-const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, hasChanges = false }) => {
+const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, hasChanges = false, plan }) => {
   const [showYearwiseBreakdown, setShowYearwiseBreakdown] = useState(false);
   
   if (!result) return null;
@@ -49,20 +50,20 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, ha
   };
 
   const getReturnColor = (value: number): string => {
-    if (value < 0.05) return colors.error.main;
-    if (value < 0.08) return colors.warning.main;
+    if (value < 0.07) return colors.error.main;
+    if (value < 0.09) return colors.warning.main;
     return colors.success.main;
   };
 
   const getComparisonText = (xirrValue: number): string => {
-    if (xirrValue < 0.05) {
+    if (xirrValue < 0.07) {
       return 'This return is lower than most fixed deposits (5-9%) and significantly lower than index funds (10-12%).';
-    } else if (xirrValue < 0.07) {
-      return 'This return is comparable to fixed deposits but lower than PPF (7.1%) and index funds (10-12%).';
     } else if (xirrValue < 0.09) {
+      return 'This return is comparable to fixed deposits but lower than index funds (10-12%).';
+    } else if (xirrValue < 0.12) {
       return 'This return is better than fixed deposits and comparable to PPF (7.1%), but still lower than index funds (10-12%).';
     } else {
-      return 'This return is competitive with most investment options including PPF and approaching index fund returns (10-12%).';
+      return 'This return is competitive with most investment options including PPF and matching or exceeding index fund returns (10-12%).';
     }
   };
 
@@ -70,13 +71,13 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, ha
     let rating: string;
     let color: string;
     
-    if (value < 0.05) {
+    if (value < 0.07) {
       rating = 'Poor';
       color = colors.error.main;
-    } else if (value < 0.07) {
+    } else if (value < 0.09) {
       rating = 'Average';
       color = colors.warning.main;
-    } else if (value < 0.09) {
+    } else if (value < 0.12) {
       rating = 'Good';
       color = colors.success.light;
     } else {
@@ -150,7 +151,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, ha
                 Investment Returns Analysis
                 {getRatingBadge(result.xirr)}
               </Subtitle>
-              <ShareOptions compact={true} />
+              <ShareOptions compact={true} plan={plan} />
             </div>
           </div>
           
@@ -587,7 +588,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, ha
               <div style={{ marginBottom: '0.75rem', color: colors.neutral.dark, fontSize: '0.9rem' }}>
                 Share these results with others
               </div>
-              <ShareOptions compact={false} />
+              <ShareOptions compact={false} plan={plan} />
             </div>
           </div>
         </Card>

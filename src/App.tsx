@@ -9,6 +9,7 @@ import GuaranteedIncomePlansInfo from './components/GuaranteedIncomePlansInfo';
 import useInvestmentCalculator from './hooks/useInvestmentCalculator';
 import { Container, Title, Paragraph, Tabs, TabButton, colors, Button } from './components/StyledComponents';
 import { InvestmentPlan, PaymentFrequency, TaxBracket } from './types';
+import { parseUrlParams, toggleUrlFormat } from './utils/urlUtils';
 
 // Default investment plan values
 const defaultPlanValues: InvestmentPlan = {
@@ -24,56 +25,15 @@ const defaultPlanValues: InvestmentPlan = {
   taxBracket: TaxBracket.ZERO
 };
 
-// Function to parse query parameters and return an investment plan
-const parseQueryParams = (): Partial<InvestmentPlan> => {
-  const params = new URLSearchParams(window.location.search);
-  const plan: Partial<InvestmentPlan> = {};
-  
-  // Parse numeric values
-  ['annualPayment', 'paymentYears', 'returnAmount', 'returnStartYear', 
-   'returnYears', 'finalReturnYear', 'finalReturnAmount'].forEach(key => {
-    const value = params.get(key);
-    if (value !== null) {
-      (plan as any)[key] = parseFloat(value);
-    }
-  });
-  
-  // Parse payment frequency
-  const paymentFreq = params.get('paymentFrequency');
-  if (paymentFreq && Object.values(PaymentFrequency).includes(paymentFreq as PaymentFrequency)) {
-    plan.paymentFrequency = paymentFreq as PaymentFrequency;
-  }
-  
-  // Parse return frequency
-  const returnFreq = params.get('returnFrequency');
-  if (returnFreq && Object.values(PaymentFrequency).includes(returnFreq as PaymentFrequency)) {
-    plan.returnFrequency = returnFreq as PaymentFrequency;
-  }
-  
-  // Parse tax bracket
-  const taxBracket = params.get('taxBracket');
-  if (taxBracket !== null) {
-    const taxValue = parseFloat(taxBracket);
-    if (!isNaN(taxValue) && Object.values(TaxBracket).includes(taxValue as TaxBracket)) {
-      plan.taxBracket = taxValue as TaxBracket;
-    }
-  }
-  
-  return plan;
-};
-
-// Function to update URL with current plan values
-const updateQueryParams = (plan: InvestmentPlan) => {
-  const params = new URLSearchParams();
-  
-  // Add all plan properties to query params
-  Object.entries(plan).forEach(([key, value]) => {
-    params.set(key, value.toString());
-  });
+// Function to update URL with current plan values (using short format by default)
+const updateQueryParams = (plan: InvestmentPlan, useShortFormat: boolean = true) => {
+  const newUrl = toggleUrlFormat(plan, useShortFormat);
+  // Extract just the query string part
+  const queryString = newUrl.split('?')[1] || '';
   
   // Update URL without reloading the page
-  const newUrl = `${window.location.pathname}?${params.toString()}`;
-  window.history.pushState({ path: newUrl }, '', newUrl);
+  const newPath = `${window.location.pathname}?${queryString}`;
+  window.history.pushState({ path: newPath }, '', newPath);
 };
 
 function App() {
@@ -88,14 +48,15 @@ function App() {
   const [activeTab, setActiveTab] = useState<string>('calculator');
   const [currentPlan, setCurrentPlan] = useState<InvestmentPlan>(() => {
     // Initialize with query params or default values
-    const queryParams = parseQueryParams();
+    const queryParams = parseUrlParams();
     return { ...defaultPlanValues, ...queryParams };
   });
   const [hasChanges, setHasChanges] = useState<boolean>(false);
+  const [useShortUrls, setUseShortUrls] = useState<boolean>(true);
   
   // Calculate results on initial load if query params are present
   useEffect(() => {
-    if (Object.keys(parseQueryParams()).length > 0) {
+    if (Object.keys(parseUrlParams()).length > 0) {
       calculateReturns(currentPlan);
     }
   }, []);
@@ -562,6 +523,7 @@ function App() {
                 result={result} 
                 onTabChange={handleTabChange}
                 hasChanges={hasChanges}
+                plan={currentPlan}
               />
             </div>
           )}

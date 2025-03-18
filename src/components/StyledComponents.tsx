@@ -503,7 +503,7 @@ export const TabContent = styled.div<{ isActive: boolean }>`
 `;
 
 // Badge component
-export const Badge = styled.span`
+export const Badge = styled.span<{ color?: string }>`
   display: inline-block;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
