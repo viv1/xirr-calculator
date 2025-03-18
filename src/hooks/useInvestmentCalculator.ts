@@ -87,7 +87,12 @@ export const useInvestmentCalculator = () => {
         cashflows: detailedCashflows
       });
     } catch (err) {
-      setError('Error calculating investment returns. Please check your inputs.');
+      // Pass through the original error message if it's an Error object
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Error calculating investment returns. Please check your inputs.');
+      }
       console.error('Calculation error:', err);
     } finally {
       setLoading(false);
