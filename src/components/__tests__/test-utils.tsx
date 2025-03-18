@@ -230,10 +230,18 @@ interface StyledFunction {
 // Define the function to create styled components
 function createStyledComponent(Component: React.ComponentType<any> | string): StyledFunction {
   const StyledComponent = React.forwardRef((props: any, ref: React.Ref<any>) => {
+    // Filter out props starting with $ (transient props)
+    const filteredProps = Object.entries(props).reduce((acc, [key, value]) => {
+      if (!key.startsWith('$')) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as Record<string, any>);
+
     if (typeof Component === 'string') {
-      return React.createElement(Component, { ref, ...props });
+      return React.createElement(Component, { ref, ...filteredProps });
     }
-    return <Component ref={ref} {...props} />;
+    return <Component ref={ref} {...filteredProps} />;
   });
   
   StyledComponent.displayName = 'StyledComponent';

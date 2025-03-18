@@ -5,9 +5,10 @@ interface ShareOptionsProps {
   compact?: boolean;
 }
 
-const ShareContainer = styled.div<{ compact?: boolean }>`
+// Use transient props with $ prefix to avoid passing them to the DOM
+const ShareContainer = styled.div<{ $compact?: boolean }>`
   display: flex;
-  gap: ${props => props.compact ? '0.5rem' : '1rem'};
+  gap: ${props => props.$compact ? '0.5rem' : '1rem'};
   align-items: center;
   flex-wrap: wrap;
 `;
@@ -107,7 +108,12 @@ const ShareOptions: React.FC<ShareOptionsProps> = ({ compact = false }) => {
   ];
 
   return (
-    <ShareContainer compact={compact} role="group" aria-label="Share options" data-compact={compact.toString()}>
+    <ShareContainer 
+      $compact={compact} 
+      role="group" 
+      aria-label="Share options" 
+      data-compact={compact ? "true" : "false"}
+    >
       <ShareButton onClick={handleCopyUrl} aria-label="Copy URL">
         <span>📋</span>
         {!compact && <span>Copy URL</span>}
