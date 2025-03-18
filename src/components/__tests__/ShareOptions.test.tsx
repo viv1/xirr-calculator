@@ -31,7 +31,7 @@ describe('ShareOptions Component', () => {
     expect(screen.getByLabelText('Copy URL')).toBeInTheDocument();
     expect(screen.getByLabelText('Share on WhatsApp')).toBeInTheDocument();
     expect(screen.getByLabelText('Share on Email')).toBeInTheDocument();
-    expect(screen.getByLabelText('Share on Twitter')).toBeInTheDocument();
+    expect(screen.getByLabelText('Share on X')).toBeInTheDocument();
     expect(screen.getByLabelText('Share on Reddit')).toBeInTheDocument();
   });
 
@@ -77,9 +77,9 @@ describe('ShareOptions Component', () => {
     const emailLink = screen.getByLabelText('Share on Email');
     expect(emailLink).toHaveAttribute('href', expect.stringContaining('mailto:'));
     
-    // Check Twitter share URL
-    const twitterLink = screen.getByLabelText('Share on Twitter');
-    expect(twitterLink).toHaveAttribute('href', expect.stringContaining('twitter.com/intent/tweet'));
+    // Check Twitter/X share URL
+    const xLink = screen.getByLabelText('Share on X');
+    expect(xLink).toHaveAttribute('href', expect.stringContaining('twitter.com/intent/tweet'));
     
     // Check Reddit share URL
     const redditLink = screen.getByLabelText('Share on Reddit');
