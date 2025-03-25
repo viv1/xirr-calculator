@@ -428,7 +428,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
                 value={formData.paymentYears}
                 onChange={handleChange}
                 min={1}
-                max={30}
+                max={100}
                 disabled={loading}
               />
             </div>
@@ -533,7 +533,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
                   value={formData.returnStartYear}
                   onChange={handleChange}
                   min={1}
-                  max={30}
+                  max={100}
                   disabled={loading}
                 />
               </div>
@@ -552,7 +552,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
                   value={formData.returnYears}
                   onChange={handleChange}
                   min={0}
-                  max={30}
+                  max={100}
                   disabled={loading}
                 />
               </div>

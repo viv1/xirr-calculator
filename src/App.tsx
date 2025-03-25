@@ -49,6 +49,13 @@ function App() {
   const [currentPlan, setCurrentPlan] = useState<InvestmentPlan>(() => {
     // Initialize with query params or default values
     const queryParams = parseUrlParams();
+    
+    // If 'fry' (final return year) is specified in URL but 'fra' (final return amount) is not,
+    // then set finalReturnAmount to 0 instead of using the default value
+    if (queryParams.finalReturnYear && queryParams.finalReturnAmount === undefined) {
+      queryParams.finalReturnAmount = 0;
+    }
+    
     return { ...defaultPlanValues, ...queryParams };
   });
   const [hasChanges, setHasChanges] = useState<boolean>(false);
@@ -492,12 +499,9 @@ function App() {
               
               <Button
                 onClick={() => {
-                  const form = document.querySelector('form');
-                  if (form) {
-                    // Create and dispatch a submit event
-                    const submitEvent = new Event('submit', { cancelable: true, bubbles: true });
-                    form.dispatchEvent(submitEvent);
-                  }
+                  // Instead of triggering a form submission event,
+                  // directly call the handleCalculate function with the current plan
+                  handleCalculate(currentPlan);
                 }}
                 style={{
                   width: '100%',
