@@ -163,3 +163,32 @@ a:hover {
     grid-template-columns: minmax(300px, 1fr) minmax(300px, 1fr);
   }
 }
+
+/* Print styles */
+@media print {
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .tabs-container,
+  .form-section,
+  .policy-summary,
+  .no-print,
+  footer {
+    display: none !important;
+  }
+
+  .calculator-container {
+    grid-template-columns: 1fr !important;
+  }
+
+  #results-section {
+    margin-top: 0 !important;
+  }
+
+  /* Hide floating button */
+  [style*="position: fixed"] {
+    display: none !important;
+  }
+}

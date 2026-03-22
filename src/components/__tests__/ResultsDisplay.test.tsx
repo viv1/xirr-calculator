@@ -77,22 +77,19 @@ describe('ResultsDisplay Component', () => {
   it('renders main results correctly', () => {
     render(<ResultsDisplay result={mockResult} plan={mockPlan} />);
     
-    // Check for XIRR, CAGR, and IRR values using more specific selectors
+    // Check for XIRR value (primary metric, always visible)
     const xirrValue = screen.getByText(/12(?:\.00)?%/, { selector: '.highlight-value' });
     expect(xirrValue).toBeInTheDocument();
-    
-    expect(screen.getByText(/11(?:\.00)?%/)).toBeInTheDocument(); // CAGR
-    expect(screen.getByText(/11\.5(?:0)?%/)).toBeInTheDocument(); // IRR
-    
-    // Check for monetary values with more flexible regex
-    expect(screen.getByText(/₹\s*1[,.]00[,.]000/)).toBeInTheDocument(); // Total invested
-    expect(screen.getByText(/₹\s*1[,.]50[,.]000/)).toBeInTheDocument(); // Total returns
-    expect(screen.getByText(/₹\s*50[,.]000/)).toBeInTheDocument(); // Net profit
+
+    // IRR/CAGR are now behind "Show detailed metrics" toggle, so check monetary values
+    expect(screen.getAllByText(/₹\s*1[,.]00[,.]000/).length).toBeGreaterThanOrEqual(1); // Total invested
+    expect(screen.getAllByText(/₹\s*1[,.]50[,.]000/).length).toBeGreaterThanOrEqual(1); // Total returns
+    expect(screen.getAllByText(/₹\s*50[,.]000/).length).toBeGreaterThanOrEqual(1); // Net profit
   });
 
   it('formats currency values correctly', () => {
     render(<ResultsDisplay result={mockResult} plan={mockPlan} />);
-    expect(screen.getByText(/₹\s*1[,.]00[,.]000/)).toBeInTheDocument();
+    expect(screen.getAllByText(/₹\s*1[,.]00[,.]000/).length).toBeGreaterThanOrEqual(1);
   });
 
   it('displays tax-adjusted XIRR when available', () => {
@@ -216,10 +213,54 @@ describe('ResultsDisplay Component', () => {
     };
 
     render(<ResultsDisplay result={invalidResult} plan={mockPlan} />);
-    
+
     // Should show N/A for invalid values - use getAllByText and check the first one
     const naElements = screen.getAllByText('N/A');
     expect(naElements.length).toBeGreaterThan(0);
     expect(naElements[0]).toBeInTheDocument();
+  });
+
+  it('shows below-inflation warning when XIRR < 6%', () => {
+    const lowResult = { ...mockResult, xirr: 0.04 };
+    render(<ResultsDisplay result={lowResult} plan={mockPlan} />);
+    expect(screen.getByText(/below the average inflation rate/i)).toBeInTheDocument();
+  });
+
+  it('does not show below-inflation warning when XIRR >= 6%', () => {
+    const goodResult = { ...mockResult, xirr: 0.08 };
+    render(<ResultsDisplay result={goodResult} plan={mockPlan} />);
+    expect(screen.queryByText(/below the average inflation rate/i)).not.toBeInTheDocument();
+  });
+
+  it('shows inflation-adjusted (real) return section', () => {
+    render(<ResultsDisplay result={mockResult} plan={mockPlan} />);
+    expect(screen.getAllByText(/Real Return/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Assumed inflation/i)).toBeInTheDocument();
+  });
+
+  it('shows inflation rate selector with default 6%', () => {
+    render(<ResultsDisplay result={mockResult} plan={mockPlan} />);
+    const select = screen.getByDisplayValue(/6%/);
+    expect(select).toBeInTheDocument();
+  });
+
+  it('shows detailed metrics toggle', () => {
+    render(<ResultsDisplay result={mockResult} plan={mockPlan} />);
+    expect(screen.getByText(/Show detailed metrics/i)).toBeInTheDocument();
+  });
+
+  it('reveals IRR and CAGR when detailed metrics toggle is clicked', () => {
+    render(<ResultsDisplay result={mockResult} plan={mockPlan} />);
+
+    // CAGR should not be visible initially (IRR text matches XIRR label, so check CAGR)
+    expect(screen.queryByText(/Compound Annual Growth Rate/i)).not.toBeInTheDocument();
+
+    // Click toggle
+    fireEvent.click(screen.getByText(/Show detailed metrics/i));
+
+    // Now they should be visible
+    expect(screen.getByText(/Compound Annual Growth Rate/i)).toBeInTheDocument();
+    // IRR card should also appear (check for the specific "IRR" label text)
+    expect(screen.getByText('IRR (Internal Rate of Return)')).toBeInTheDocument();
   });
 }); 

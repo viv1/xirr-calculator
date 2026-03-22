@@ -108,11 +108,12 @@ export const Title = styled.h1`
   background-clip: text;
   
   @media (max-width: 768px) {
-    font-size: 2rem;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
   }
-  
+
   @media (max-width: 480px) {
-    font-size: 1.75rem;
+    font-size: 1.3rem;
   }
 `;
 
@@ -293,52 +294,62 @@ export const SliderValue = styled.div`
 
 export const Button = styled(motion.button)`
   padding: 0.75rem 1.5rem;
-  background: ${colors.gradient.blue};
+  background: ${colors.primary.dark};
   color: white;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+
   svg {
     margin-right: 0.5rem;
   }
-  
+
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
+    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.35);
+    background: ${colors.primary.main};
   }
-  
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
   &:disabled {
     opacity: 0.7;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
   }
-  
+
   @media (max-width: 480px) {
-    padding: 0.6rem 1.2rem;
+    padding: 0.7rem 1.2rem;
     font-size: 0.9rem;
+    font-weight: 600;
   }
 `;
 
 export const SecondaryButton = styled(Button)`
   background: white;
-  color: ${colors.primary.main};
-  border: 1px solid ${colors.primary.main};
-  
+  color: ${colors.primary.dark};
+  border: 2px solid ${colors.primary.main};
+  box-shadow: none;
+
   &:hover {
-    background: ${colors.neutral.lightest};
-    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.1);
+    background: ${colors.primary.main};
+    color: white;
+    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
   }
-  
+
   @media (max-width: 480px) {
-    padding: 0.6rem 1.2rem;
+    padding: 0.7rem 1.2rem;
     font-size: 0.9rem;
   }
 `;
@@ -436,7 +447,7 @@ export const Divider = styled.div`
 `;
 
 // Collapsible components
-export const CollapsibleHeader = styled.div<{ isOpen?: boolean }>`
+export const CollapsibleHeader = styled.div<{ $isOpen?: boolean }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -444,7 +455,7 @@ export const CollapsibleHeader = styled.div<{ isOpen?: boolean }>`
   padding: 1rem;
   border-radius: 8px;
   background-color: ${colors.neutral.lightest};
-  margin-bottom: ${props => props.isOpen ? '1rem' : '0'};
+  margin-bottom: ${props => props.$isOpen ? '1rem' : '0'};
   transition: all 0.3s ease;
   
   &:hover {
@@ -463,41 +474,58 @@ export const Tabs = styled.div`
   margin-bottom: 2rem;
   overflow-x: auto;
   scrollbar-width: none;
-  
+
   &::-webkit-scrollbar {
     display: none;
   }
-  
+
   @media (max-width: 768px) {
-    padding-bottom: 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25rem;
+    border-bottom: none;
+    margin-bottom: 1rem;
+    overflow-x: visible;
+    padding: 0.25rem;
+    background-color: ${colors.neutral.lightest};
+    border-radius: 12px;
   }
 `;
 
-export const TabButton = styled.button<{ isActive?: boolean }>`
+export const TabButton = styled.button<{ $isActive?: boolean }>`
   padding: 1rem 1.5rem;
   background: transparent;
   border: none;
-  border-bottom: 3px solid ${props => props.isActive ? colors.primary.main : 'transparent'};
-  color: ${props => props.isActive ? colors.primary.dark : colors.neutral.dark};
-  font-weight: ${props => props.isActive ? '600' : '500'};
+  border-bottom: 3px solid ${props => props.$isActive ? colors.primary.main : 'transparent'};
+  color: ${props => props.$isActive ? colors.primary.dark : colors.neutral.dark};
+  font-weight: ${props => props.$isActive ? '600' : '500'};
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
-  
+
   &:hover {
     color: ${colors.primary.main};
     background-color: ${colors.neutral.lightest};
   }
-  
+
   @media (max-width: 768px) {
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
+    padding: 0.6rem 0.5rem;
+    font-size: 0.8rem;
+    white-space: normal;
+    text-align: center;
+    border-bottom: none;
+    border-radius: 8px;
+    line-height: 1.2;
+    background-color: ${props => props.$isActive ? colors.neutral.white : 'transparent'};
+    box-shadow: ${props => props.$isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};
+    color: ${props => props.$isActive ? colors.primary.dark : colors.neutral.dark};
+    font-weight: ${props => props.$isActive ? '600' : '400'};
   }
 `;
 
-export const TabContent = styled.div<{ isActive: boolean }>`
-  display: ${props => props.isActive ? 'block' : 'none'};
+export const TabContent = styled.div<{ $isActive: boolean }>`
+  display: ${props => props.$isActive ? 'block' : 'none'};
   opacity: 1;
   transition: opacity 0.5s ease;
 `;

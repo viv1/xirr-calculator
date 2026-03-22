@@ -73,6 +73,11 @@ const xirr = (values: number[], dates: Date[], guess: number = 0.1): number => {
       derivative -= dayFraction * sortedValues[j] / (factor * (1 + rate));
     }
     
+    // Guard against zero derivative
+    if (Math.abs(derivative) < 1e-15) {
+      throw new Error('XIRR calculation failed: degenerate derivative');
+    }
+
     // Calculate next rate
     const newRate = rate - f / derivative;
     
@@ -134,6 +139,16 @@ export const calculateCAGR = (
 export const formatPercentage = (value: number, decimalPlaces: number = 2): string => {
   if (isNaN(value)) return 'N/A';
   return `${(value * 100).toFixed(decimalPlaces)}%`;
+};
+
+/**
+ * Calculate inflation-adjusted (real) return
+ * @param nominalRate Nominal rate as a decimal
+ * @param inflationRate Inflation rate as a decimal
+ * @returns Real rate as a decimal
+ */
+export const calculateRealReturn = (nominalRate: number, inflationRate: number): number => {
+  return ((1 + nominalRate) / (1 + inflationRate)) - 1;
 };
 
 /**

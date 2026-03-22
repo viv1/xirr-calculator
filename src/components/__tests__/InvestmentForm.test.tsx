@@ -29,17 +29,15 @@ describe('InvestmentForm Component', () => {
 
   it('renders investment form elements correctly', () => {
     render(<InvestmentForm {...defaultProps} />);
-    
-    // Check for headers
-    expect(screen.getByText('Investment Details')).toBeInTheDocument();
-    expect(screen.getByText('Return Details')).toBeInTheDocument();
-    
-    // Check for payment years label
-    expect(screen.getByText(/Payment Period/i)).toBeInTheDocument();
-    
-    // Use getAllByText and check that there are multiple frequency labels
-    const labels = screen.getAllByText(/Frequency/i);
-    expect(labels.length).toBeGreaterThan(0);
+
+    // Check for step headers
+    expect(screen.getByText('What You Pay')).toBeInTheDocument();
+    expect(screen.getByText('What You Get Back')).toBeInTheDocument();
+
+    // Check for key labels
+    const howOftenLabels = screen.getAllByText(/How often/i);
+    expect(howOftenLabels.length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/For how many years/i).length).toBeGreaterThan(0);
   });
 
   it('fires onFormChange when form values change', async () => {
@@ -87,9 +85,66 @@ describe('InvestmentForm Component', () => {
 
   it('formats currency values correctly', () => {
     render(<InvestmentForm {...defaultProps} />);
-    
+
     // Check for currency values by looking at the ranges
     const sliderRanges = screen.getAllByText(/₹/);
     expect(sliderRanges.length).toBeGreaterThan(0);
+  });
+
+  it('renders preset template buttons', () => {
+    render(<InvestmentForm {...defaultProps} />);
+    expect(screen.getByText('Endowment')).toBeInTheDocument();
+    expect(screen.getByText('Guaranteed')).toBeInTheDocument();
+    expect(screen.getByText('ULIP')).toBeInTheDocument();
+    expect(screen.getByText('Pension')).toBeInTheDocument();
+  });
+
+  it('applies preset when template button is clicked', async () => {
+    const mockOnFormChange = vi.fn();
+    render(<InvestmentForm {...defaultProps} onFormChange={mockOnFormChange} />);
+
+    await userEvent.click(screen.getByText('Endowment'));
+    expect(mockOnFormChange).toHaveBeenCalled();
+
+    // Endowment preset has annualPayment = 100000
+    const lastCall = mockOnFormChange.mock.calls[mockOnFormChange.mock.calls.length - 1][0];
+    expect(lastCall.annualPayment).toBe(100000);
+    expect(lastCall.returnAmount).toBe(0);
+    expect(lastCall.finalReturnYear).toBe(15);
+  });
+
+  it('renders step blocks with correct titles', () => {
+    render(<InvestmentForm {...defaultProps} />);
+    expect(screen.getByText('What You Pay')).toBeInTheDocument();
+    expect(screen.getByText('What You Get Back')).toBeInTheDocument();
+  });
+
+  it('shows advanced section when toggle is clicked', async () => {
+    render(<InvestmentForm {...defaultProps} />);
+
+    // Advanced section should be collapsed initially
+    expect(screen.queryByLabelText('Tax bracket')).not.toBeInTheDocument();
+
+    // Click to expand
+    const advancedToggle = screen.getByText('Advanced');
+    await userEvent.click(advancedToggle);
+
+    // Tax bracket select should now be visible
+    expect(document.getElementById('taxBracket')).toBeInTheDocument();
+  });
+
+  it('renders with custom currentPlan values', () => {
+    const customPlan = {
+      annualPayment: 200000, paymentYears: 5, returnAmount: 0,
+      returnStartYear: 1, returnYears: 0, finalReturnYear: 10, finalReturnAmount: 1500000,
+      paymentFrequency: PaymentFrequency.ANNUAL, returnFrequency: PaymentFrequency.ANNUAL,
+      taxBracket: TaxBracket.ZERO
+    };
+    render(<InvestmentForm {...defaultProps} currentPlan={customPlan} />);
+
+    // Should render with the custom plan's payment amount
+    const input = document.getElementById('annualPayment') as HTMLInputElement;
+    expect(input).toBeInTheDocument();
+    expect(Number(input.value)).toBe(200000);
   });
 }); 

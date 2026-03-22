@@ -1,7 +1,7 @@
 import React, { ReactElement, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CalculationResult, TaxBracket, CashFlow, InvestmentPlan } from '../types';
-import { formatPercentage } from '../utils/financialCalculations';
+import { formatPercentage, calculateRealReturn } from '../utils/financialCalculations';
 import {
   ResultsContainer,
   ResultCard,
@@ -29,7 +29,9 @@ interface ResultsDisplayProps {
 }
 
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, hasChanges = false, plan }) => {
-  const [showYearwiseBreakdown, setShowYearwiseBreakdown] = useState(false);
+  const [showYearwiseBreakdown, setShowYearwiseBreakdown] = useState(true);
+  const [showDetailedMetrics, setShowDetailedMetrics] = useState(false);
+  const [inflationRate, setInflationRate] = useState(0.06);
   
   if (!result) return null;
 
@@ -276,9 +278,9 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, ha
               </>
             )}
             
-            <InfoText style={{ 
-              fontWeight: 500, 
-              marginTop: '1rem', 
+            <InfoText style={{
+              fontWeight: 500,
+              marginTop: '1rem',
               color: getReturnColor(result.xirr),
               padding: '0.75rem',
               backgroundColor: `${getReturnColor(result.xirr)}10`,
@@ -286,59 +288,66 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, ha
             }}>
               {getComparisonText(result.xirr)}
             </InfoText>
-          </ResultCard>
-          
-          <motion.div 
-            className="result-grid"
-            style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-              gap: '1rem' 
-            }}
-          >
-            <ResultCard className="result-card">
-              <ResultRow>
-                <ResultLabel className="result-label">IRR (Internal Rate of Return)</ResultLabel>
-                <ResultValue className="result-value">{safeFormatPercentage(result.irr)}</ResultValue>
-              </ResultRow>
-              <InfoText>
-                IRR assumes equal time periods between cash flows.
-              </InfoText>
-            </ResultCard>
-            
-            <ResultCard className="result-card">
-              <ResultRow>
-                <ResultLabel className="result-label">CAGR (Compound Annual Growth Rate)</ResultLabel>
-                <ResultValue className="result-value">{safeFormatPercentage(result.cagr)}</ResultValue>
-              </ResultRow>
-              <InfoText>
-                CAGR measures the annual growth rate of an investment over a specified time period.
-              </InfoText>
-            </ResultCard>
-          </motion.div>
-          
-          {onTabChange && (
-            <motion.div
-              style={{
-                marginTop: '1rem',
+
+            {isFinite(result.xirr) && result.xirr < 0.06 && (
+              <InfoText style={{
+                fontWeight: 500,
+                marginTop: '0.75rem',
+                color: colors.error.dark,
                 padding: '0.75rem',
-                backgroundColor: `${colors.primary.light}15`,
+                backgroundColor: `${colors.error.light}15`,
                 borderRadius: '8px',
-                textAlign: 'center'
-              }}
-            >
-              <span style={{ fontWeight: 500 }}>
-                Not sure what these metrics mean? 
-              </span>
-              <Button 
-                onClick={() => onTabChange('info')}
-                style={{ marginLeft: '0.5rem', fontSize: '0.9rem' }}
-              >
-                Learn about XIRR, IRR & CAGR
-              </Button>
-            </motion.div>
+                border: `1px solid ${colors.error.light}`
+              }}>
+                Your XIRR of {safeFormatPercentage(result.xirr)} is below the average inflation rate (~5-6%).
+                This plan may result in negative real returns — meaning your money could lose purchasing power over time.
+              </InfoText>
+            )}
+          </ResultCard>
+
+          {/* Inflation-adjusted return */}
+          {isFinite(result.xirr) && (
+            <ResultCard className="result-card">
+              <ResultRow>
+                <ResultLabel className="result-label">
+                  Real Return (after inflation)
+                </ResultLabel>
+                <HighlightValue style={{
+                  color: calculateRealReturn(result.xirr, inflationRate) >= 0 ? colors.success.main : colors.error.main,
+                  fontSize: '1.2rem'
+                }}>
+                  {safeFormatPercentage(calculateRealReturn(result.xirr, inflationRate))}
+                </HighlightValue>
+              </ResultRow>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <InfoText style={{ margin: 0, whiteSpace: 'nowrap' }}>Assumed inflation:</InfoText>
+                <select
+                  value={inflationRate}
+                  onChange={(e) => setInflationRate(parseFloat(e.target.value))}
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '4px',
+                    border: `1px solid ${colors.neutral.light}`,
+                    fontSize: '0.85rem',
+                    color: colors.neutral.darkest,
+                    backgroundColor: colors.neutral.white
+                  }}
+                >
+                  <option value={0.04}>4%</option>
+                  <option value={0.05}>5%</option>
+                  <option value={0.06}>6% (default)</option>
+                  <option value={0.07}>7%</option>
+                  <option value={0.08}>8%</option>
+                </select>
+              </div>
+              <InfoText>
+                Real return shows your actual purchasing power growth after accounting for inflation.
+                A negative real return means your money loses value over time.
+              </InfoText>
+            </ResultCard>
           )}
-          
+
+          {/* Quick summary: Total invested vs returned */}
           <ResultCard className="result-card">
             <motion.div
               className="result-grid"
@@ -353,27 +362,24 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, ha
                   <ResultLabel className="result-label">Total Invested</ResultLabel>
                   <ResultValue className="result-value">{formatCurrency(result.totalInvested)}</ResultValue>
                 </ResultRow>
-                
                 <ResultRow>
                   <ResultLabel className="result-label">Total Returns</ResultLabel>
                   <ResultValue className="result-value">{formatCurrency(result.totalReturns)}</ResultValue>
                 </ResultRow>
               </div>
-              
               <div>
                 <ResultRow>
                   <ResultLabel className="result-label">Net Profit</ResultLabel>
-                  <ResultValue className="result-value" style={{ 
-                    color: result.netProfit >= 0 ? colors.success.main : colors.error.main 
+                  <ResultValue className="result-value" style={{
+                    color: result.netProfit >= 0 ? colors.success.main : colors.error.main
                   }}>
                     {formatCurrency(result.netProfit)}
                   </ResultValue>
                 </ResultRow>
-                
                 <ResultRow>
                   <ResultLabel className="result-label">Absolute Return</ResultLabel>
-                  <ResultValue className="result-value" style={{ 
-                    color: result.netProfit >= 0 ? colors.success.main : colors.error.main 
+                  <ResultValue className="result-value" style={{
+                    color: result.netProfit >= 0 ? colors.success.main : colors.error.main
                   }}>
                     {safeFormatPercentage(result.netProfit / result.totalInvested)}
                   </ResultValue>
@@ -381,44 +387,97 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, ha
               </div>
             </motion.div>
           </ResultCard>
-          
-          <InfoText style={{ 
-            backgroundColor: `${colors.warning.light}15`, 
-            padding: '1rem', 
-            borderRadius: '8px',
-            border: `1px solid ${colors.warning.light}`,
-            marginTop: '1rem'
-          }}>
-            <strong>Important Note:</strong> Insurance agents often quote returns without considering the time value of money.
-            XIRR provides a more accurate picture of your actual returns. Remember that mixing investment and insurance 
-            typically results in suboptimal outcomes for both needs.
-          </InfoText>
-          
-          <motion.div 
-            style={{ 
-              marginTop: '1.5rem',
-              padding: '1rem',
-              borderRadius: '8px',
-              backgroundColor: colors.neutral.lightest,
-              border: `1px solid ${colors.neutral.light}`
-            }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: colors.neutral.darkest }}>
-              Compare with other investment options:
-            </div>
-            <div style={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              gap: '0.5rem',
-              alignItems: 'center'
-            }}>
-              <Badge color={colors.neutral.medium}>Fixed Deposits (Bank): 5-9%</Badge>
-              <Badge color={colors.neutral.dark}>Fixed Deposits (Corporate): 7-9%</Badge>
-              <Badge color={colors.primary.light}>PPF: 7.1% (tax-free)</Badge>
-              <Badge color={colors.secondary.light}>NPS: 8-10%</Badge>
-              <Badge color={colors.success.main}>Index Funds: 10-12% (long-term)</Badge>
-            </div>
-          </motion.div>
+
+          {/* Collapsible: More detailed metrics */}
+          <div style={{ marginTop: '1rem' }}>
+            <button
+              onClick={() => setShowDetailedMetrics(!showDetailedMetrics)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: colors.primary.dark,
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                padding: '0.5rem 0'
+              }}
+            >
+              <span style={{
+                transform: showDetailedMetrics ? 'rotate(90deg)' : 'rotate(0)',
+                transition: 'transform 0.2s',
+                display: 'inline-block'
+              }}>▶</span>
+              {showDetailedMetrics ? 'Hide' : 'Show'} detailed metrics & comparisons
+            </button>
+
+            {showDetailedMetrics && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                transition={{ duration: 0.2 }}
+              >
+                <motion.div
+                  className="result-grid"
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                    gap: '1rem',
+                    marginTop: '0.5rem'
+                  }}
+                >
+                  <ResultCard className="result-card">
+                    <ResultRow>
+                      <ResultLabel className="result-label">IRR (Internal Rate of Return)</ResultLabel>
+                      <ResultValue className="result-value">{safeFormatPercentage(result.irr)}</ResultValue>
+                    </ResultRow>
+                    <InfoText>Assumes equal time periods between cash flows.</InfoText>
+                  </ResultCard>
+
+                  <ResultCard className="result-card">
+                    <ResultRow>
+                      <ResultLabel className="result-label">CAGR (Compound Annual Growth Rate)</ResultLabel>
+                      <ResultValue className="result-value">{safeFormatPercentage(result.cagr)}</ResultValue>
+                    </ResultRow>
+                    <InfoText>Annual growth rate over the full investment period.</InfoText>
+                  </ResultCard>
+                </motion.div>
+
+                <InfoText style={{
+                  backgroundColor: `${colors.warning.light}15`,
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  border: `1px solid ${colors.warning.light}`,
+                  marginTop: '1rem'
+                }}>
+                  <strong>Important:</strong> Insurance agents often quote returns without considering the time value of money.
+                  XIRR provides a more accurate picture of your actual returns.
+                </InfoText>
+
+                <motion.div
+                  style={{
+                    marginTop: '1rem',
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    backgroundColor: colors.neutral.lightest,
+                    border: `1px solid ${colors.neutral.light}`
+                  }}
+                >
+                  <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: colors.neutral.darkest }}>
+                    Compare with other options:
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+                    <Badge color={colors.neutral.medium}>Bank FD: 5-9%</Badge>
+                    <Badge color={colors.primary.light}>PPF: 7.1% (tax-free)</Badge>
+                    <Badge color={colors.secondary.light}>NPS: 8-10%</Badge>
+                    <Badge color={colors.success.main}>Index Funds: 10-12%</Badge>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </div>
           
           {/* Yearwise Breakdown Section */}
           <motion.div
@@ -436,7 +495,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, ha
             </div>
             
             <CollapsibleHeader 
-              isOpen={showYearwiseBreakdown}
+              $isOpen={showYearwiseBreakdown}
               onClick={() => setShowYearwiseBreakdown(!showYearwiseBreakdown)}
               style={{
                 padding: '1rem',
@@ -530,56 +589,31 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, ha
             <motion.div
               style={{
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
                 marginTop: '1.5rem',
-                padding: '1rem',
-                borderRadius: '8px',
-                backgroundColor: `${colors.primary.light}10`,
-                border: `1px dashed ${colors.primary.light}`
+                justifyContent: 'center'
               }}
             >
-              <div style={{ fontWeight: 600, color: colors.primary.dark, textAlign: 'center' }}>
-                Want to learn more?
-              </div>
-              
-              <div style={{ 
-                display: 'flex', 
-                flexWrap: 'wrap', 
-                gap: '0.75rem',
-                justifyContent: 'center' 
-              }}>
-                <Button 
-                  onClick={() => onTabChange('info')}
-                  style={{ 
-                    backgroundColor: colors.primary.main,
-                    minWidth: '180px'
-                  }}
-                >
-                  <span role="img" aria-label="lightbulb">💡</span> Understanding Returns
-                </Button>
-                
-                <Button 
-                  onClick={() => onTabChange('tax')}
-                  style={{ 
-                    backgroundColor: colors.secondary.main,
-                    minWidth: '180px'
-                  }}
-                >
-                  <span role="img" aria-label="document">📝</span> Tax Implications
-                </Button>
-              </div>
-              
-              <InfoText style={{ textAlign: 'center', marginBottom: '0' }}>
-                Make better financial decisions with complete information
-              </InfoText>
+              <Button
+                onClick={() => onTabChange('learn')}
+                style={{ backgroundColor: colors.primary.dark }}
+              >
+                Learn about XIRR & returns
+              </Button>
+              <Button
+                onClick={() => onTabChange('tax')}
+                style={{ backgroundColor: colors.secondary.main }}
+              >
+                Tax implications
+              </Button>
             </motion.div>
           )}
 
           {/* Add ShareOptions at the bottom */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
             marginTop: '2rem',
             borderTop: `1px solid ${colors.neutral.light}`,
             paddingTop: '1.5rem'
@@ -588,7 +622,20 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onTabChange, ha
               <div style={{ marginBottom: '0.75rem', color: colors.neutral.dark, fontSize: '0.9rem' }}>
                 Share these results with others
               </div>
-              <ShareOptions compact={false} plan={plan} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <ShareOptions compact={false} plan={plan} />
+                <Button
+                  onClick={() => window.print()}
+                  style={{
+                    backgroundColor: colors.neutral.dark,
+                    fontSize: '0.85rem',
+                    padding: '0.5rem 1rem'
+                  }}
+                  className="no-print"
+                >
+                  Print / Save PDF
+                </Button>
+              </div>
             </div>
           </div>
         </Card>
